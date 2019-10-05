@@ -83,7 +83,7 @@ export default class Agent {
         for (let y = 0; y < world.height; ++y) {
             for (let x = 0; x < world.width; ++x) {
                 const cell = world.map[y][x];
-                if (cell.ore !== null) {
+                if (typeof cell.ore === 'number') {
                     if (cell.ore > 0) {
                         this.beliefs[y][x].observedOre();
                     } else {
@@ -147,7 +147,7 @@ export default class Agent {
             for (let x = 1; x < world.width; ++x) { // Start at 1 because cannot dig headquarter row
                 const cell = world.map[y][x];
                 const belief = this.beliefs[y][x];
-                if (belief.oreBelief >= 0) {
+                if (belief.oreBelief >= 0 && belief.trapBelief <= 0) {
                     const distance = Vec.distance(cell.pos, from);
                     if (distance < closest) {
                         closest = distance;
