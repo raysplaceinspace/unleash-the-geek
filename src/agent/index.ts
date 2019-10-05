@@ -100,7 +100,7 @@ export default class Agent {
         const actions = new Array<w.Action>();
         const robots = world.entities.filter(r => r.type === w.ItemType.RobotTeam0);
         for (const robot of robots) {
-            actions.push(this.chooseForRobot(world, robot));
+            actions.push(this.chooseForRobot(world, robot, actions));
         }
 
         return actions;
@@ -121,7 +121,7 @@ export default class Agent {
         return result;
     }
 
-    private chooseForRobot(world: w.World, robot: w.Entity): w.Action {
+    private chooseForRobot(world: w.World, robot: w.Entity, otherActions: w.Action[]): w.Action {
         if (robot.dead) {
             return {
                 entityId: robot.id,
@@ -137,12 +137,12 @@ export default class Agent {
             return {
                 entityId: robot.id,
                 type: "dig",
-                target: this.closestUndug(robot.pos, world),
+                target: this.closestUndug(robot.pos, world, otherActions),
             }
         }
     }
 
-    private closestUndug(from: Vec, world: w.World) {
+    private closestUndug(from: Vec, world: w.World, otherActions: w.Action[]) {
         let target = from;
         let best = 0;
         for (let y = 0; y < world.height; ++y) {
@@ -151,7 +151,8 @@ export default class Agent {
                 const belief = this.beliefs[y][x];
                 if (belief.trapBelief <= 0) {
                     const cost = Math.floor(Vec.distance(cell.pos, from) / w.MovementSpeed);
-                    const payoff = belief.oreProbability() / (1 + cost);
+                    const duplication = this.duplicationCost(cell.pos, otherActions);
+                    const payoff = (belief.oreProbability() / (1 + cost)) - duplication;
                     if (payoff > best) {
                         best = payoff;
                         target = cell.pos;
@@ -161,6 +162,23 @@ export default class Agent {
         }
         console.error(`Targeting ${target.string()} with payoff ${best}`);
         return target;
+    }
+
+    private duplicationCost(target: Vec, otherActions: w.Action[]): number {
+        const DuplicationRange = 1;
+
+        const outside = DuplicationRange + 1;
+        let closest = outside;
+        otherActions.forEach(action => {
+            if (action && action.type === "dig") {
+                const distance = Vec.l1(action.target, target);
+                if (distance < closest) {
+                    closest = distance;
+                }
+            }
+        });
+
+        return outside - closest;
     }
 }
 
@@ -177,7 +195,8 @@ class CellBelief {
 
     observedSelfDig(success: boolean) {
         if (success) {
-            this.oreBelief += 1;
+            this.oreBelief = 1;
+            this.oreKnown = 1;
         } else {
             this.oreBelief = -1;
             this.oreKnown = -1;
@@ -186,9 +205,9 @@ class CellBelief {
 
     observedNeighbour(success: boolean) {
         if (success) {
-            this.oreBelief += 0.5;
+            this.oreBelief += 1;
         } else {
-            this.oreBelief -= 0.5;
+            this.oreBelief -= 1;
         }
     }
 
