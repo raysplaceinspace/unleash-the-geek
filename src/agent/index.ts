@@ -5,7 +5,7 @@ import * as log from '../log';
 import Vec from '../util/vector';
 
 function withinBounds(p: Vec, world: w.World) {
-    return 0 <= p.x && p.x < world.width && 0 <= p.y && p.y < world.height;
+    return distanceToEdge(p, world) >= 0;
 }
 
 function* neighbours(pos: Vec, world: w.World, range: number = 1): Iterable<Vec> {
@@ -17,6 +17,13 @@ function* neighbours(pos: Vec, world: w.World, range: number = 1): Iterable<Vec>
             }
         }
     }
+}
+
+function distanceToEdge(p: Vec, world: w.World) {
+    return Math.min(
+        p.x, world.width - p.x - 1,
+        p.y, world.height - p.y - 1,
+    );
 }
 
 export default class Agent {
@@ -132,7 +139,6 @@ export default class Agent {
                 target: new Vec(0, robot.pos.y),
             };
         } else if (world.teams[0].radarCooldown === 0 && robot.pos.x === 0) {
-            console.error("Requesting radar");
             return {
                 entityId: robot.id,
                 type: "request",
@@ -157,16 +163,15 @@ export default class Agent {
             for (let x = 0; x < world.width; ++x) {
                 const cell = world.map[y][x];
                 const belief = this.beliefs[y][x];
-                if (belief.trapBelief <= 0) {
-                    const moveCost = Math.ceil(Math.max(0, Vec.l1(cell.pos, from) - w.DigRange) / w.MovementSpeed)
-                    const returnCost = Math.ceil(cell.pos.x / w.MovementSpeed);
-                    const duplication = this.duplicationCost(cell.pos, otherActions);
-                    const radarCost = hasRadar ? this.radarCost(cell.pos, world) : 0;
-                    const cost = moveCost + returnCost + radarCost + duplication;
 
-                    const payoff = (belief.oreProbability() * Math.exp(-cost));
-                    payoffs[y][x] = payoff;
-                }
+                const moveCost = Math.ceil(Math.max(0, Vec.l1(cell.pos, from) - w.DigRange) / w.MovementSpeed)
+                const returnCost = Math.ceil(cell.pos.x / w.MovementSpeed);
+                const radarCost = hasRadar ? this.radarCost(cell.pos, world) : 0;
+                const duplication = this.duplicationCost(cell.pos, otherActions);
+                const cost = moveCost + returnCost + radarCost + duplication;
+
+                const payoff = Math.exp(-cost) * belief.oreProbability() * Math.min(1, Math.exp(-belief.trapBelief));
+                payoffs[y][x] = payoff;
             }
         }
 
@@ -202,8 +207,8 @@ export default class Agent {
     }
 
     private radarCost(target: Vec, world: w.World): number {
-        const outside = w.RadarRange + 1;
-        let closest = outside;
+        const outside = 2 * w.RadarRange + 1;
+        let closest = Math.min(outside, distanceToEdge(target, world));
         world.entities.forEach(radar => {
             if (radar && radar.type === w.ItemType.Radar) {
                 const distance = Vec.l1(radar.pos, target);
@@ -255,11 +260,11 @@ class CellBelief {
     }
 
     observedStillEnemy() {
-        this.trapBelief += 0.01;
+        this.trapBelief += 1;
     }
 
     observedEnemyDig() {
-        this.trapBelief += 0.1;
+        this.trapBelief += 1;
     }
 
     observedOre(success: boolean) {
