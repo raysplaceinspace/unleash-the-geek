@@ -1,14 +1,13 @@
 import * as angles from '../util/angles';
-import * as agent from '../agent';
-import * as model from '../model';
-import * as w from '../model/world';
-import { Vec } from '../util/vector';
+import * as w from '../world';
+import Agent from '../agent';
+import Vec from '../util/vector';
 
 function readInitial(): w.World {
     const inputs = readline().split(' ');
     const width = parseInt(inputs[0]);
     const height = parseInt(inputs[1]); // size of the map
-    return model.initialWorld(width, height);
+    return w.initialWorld(width, height);
 }
 
 function readNext(world: w.World) {
@@ -27,8 +26,9 @@ function readNext(world: w.World) {
             const hole = parseInt(inputs[2*j+1]);// 1 if cell has a hole
 
             if (ore !== '?') {
-                cell.seen = world.tick;
                 cell.ore = parseInt(ore);
+            } else {
+                cell.ore = null;
             }
 
             cell.hole = hole === 1;
@@ -88,17 +88,22 @@ function formatItemType(itemType: w.ItemType) {
     }
 }
 
-// initialisation
-let world = readInitial();
+function main() {
+    // initialisation
+    let world = readInitial();
+    const agent = new Agent();
 
-// game loop
-while (true) {
-    readNext(world);
-    const actions = agent.choose(world, 0);
+    // game loop
+    while (true) {
+        readNext(world);
+        const actions = agent.choose(world, 0);
 
-    for (let i = 0; i < 5; i++) {
-        console.log(formatAction(actions[i]));
+        for (let i = 0; i < 5; i++) {
+            console.log(formatAction(actions[i]));
+        }
+
+        world.tick++;
     }
-
-    world.tick++;
 }
+
+main();

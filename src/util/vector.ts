@@ -1,4 +1,4 @@
-export class Vec {
+export default class Vec {
     x: number;
     y: number;
 
@@ -75,5 +75,3 @@ export class Vec {
     }
 
 }
-
-export default Vec;
