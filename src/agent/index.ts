@@ -52,8 +52,10 @@ export default class Agent {
 
                     const target = previousAction.target;
                     if (previousRobot && previousRobot.carrying !== robot.carrying && robot.carrying === w.ItemType.Ore) {
+                        console.error(`Successful dig at ${target.string()}`);
                         this.beliefs[target.y][target.x].observedSuccessfulDig();
                     } else {
+                        console.error(`Unsuccessful dig at ${target.string()}`);
                         this.beliefs[target.y][target.x].observedUnsuccessfulDig();
                     }
                 }
@@ -68,6 +70,7 @@ export default class Agent {
                     if (!knownDig) {
                         wu(neighbours(previousRobot.pos, world)).forEach(n => {
                             if (world.map[n.y][n.x].hole) {
+                                console.error(`Enemy still near ${n.string()}`);
                                 this.beliefs[n.y][n.x].observedStillEnemy();
                             }
                         });
@@ -77,6 +80,7 @@ export default class Agent {
         });
 
         unexplainedDigs.forEach(dig => {
+            console.error(`Unexplained dig at ${dig.string()}`);
             this.beliefs[dig.y][dig.x].observedEnemyDig();
         });
 
