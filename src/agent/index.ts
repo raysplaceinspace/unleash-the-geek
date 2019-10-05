@@ -142,12 +142,12 @@ export default class Agent {
             return {
                 entityId: robot.id,
                 type: "dig",
-                target: this.closestUndug(robot.pos, world, otherActions),
+                target: this.closestUndug(robot.pos, robot.carrying === w.ItemType.Radar, world, otherActions),
             }
         }
     }
 
-    private closestUndug(from: Vec, world: w.World, otherActions: w.Action[]) {
+    private closestUndug(from: Vec, hasRadar: boolean, world: w.World, otherActions: w.Action[]) {
         let target = from;
         let best = 0;
 
@@ -161,7 +161,8 @@ export default class Agent {
                     const moveCost = Math.ceil(Math.max(0, Vec.l1(cell.pos, from) - w.DigRange) / w.MovementSpeed)
                     const returnCost = Math.ceil(cell.pos.x / w.MovementSpeed);
                     const duplication = this.duplicationCost(cell.pos, otherActions);
-                    const cost = moveCost + returnCost + duplication;
+                    const radarCost = hasRadar ? this.radarCost(cell.pos, world) : 0;
+                    const cost = moveCost + returnCost + radarCost + duplication;
 
                     const payoff = (belief.oreProbability() * Math.exp(-cost));
                     payoffs[y][x] = payoff;
@@ -191,6 +192,21 @@ export default class Agent {
         otherActions.forEach(action => {
             if (action && action.type === "dig") {
                 const distance = Vec.l1(action.target, target);
+                if (distance < closest) {
+                    closest = distance;
+                }
+            }
+        });
+
+        return outside - closest;
+    }
+
+    private radarCost(target: Vec, world: w.World): number {
+        const outside = w.RadarRange + 1;
+        let closest = outside;
+        world.entities.forEach(radar => {
+            if (radar && radar.type === w.ItemType.Radar) {
+                const distance = Vec.l1(radar.pos, target);
                 if (distance < closest) {
                     closest = distance;
                 }
