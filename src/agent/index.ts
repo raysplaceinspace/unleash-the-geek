@@ -48,7 +48,7 @@ export default class Agent {
                 if (previousAction
                     && previousAction.type === "dig"
                     && Vec.l1(previousRobot.pos, robot.pos) === 0 // Stand still to dig
-                    && Vec.l1(previousAction.target, previousRobot.pos) <= 1) { // Must be next to cell to dig it
+                    && Vec.l1(previousAction.target, previousRobot.pos) <= w.DigRange) { // Must be next to cell to dig it
 
                     unexplainedDigs.delete(previousAction.target.string());
 
@@ -68,7 +68,7 @@ export default class Agent {
             if (robot.type === w.ItemType.RobotTeam1 && !robot.dead) {
                 const previousRobot = previous.entities.find(r => r.id === robot.id);
                 if (previousRobot && previousRobot.pos.x === robot.pos.x && previousRobot.pos.y === robot.pos.y) {
-                    const knownDig = wu(unexplainedDigs.values()).some(dig => Vec.l1(dig, previousRobot.pos) <= 1);
+                    const knownDig = wu(unexplainedDigs.values()).some(dig => Vec.l1(dig, previousRobot.pos) <= w.DigRange);
                     if (!knownDig) {
                         wu(neighbours(previousRobot.pos, world)).forEach(n => {
                             if (world.map[n.y][n.x].hole) {
@@ -152,8 +152,12 @@ export default class Agent {
                 const cell = world.map[y][x];
                 const belief = this.beliefs[y][x];
                 if (belief.trapBelief <= 0) {
-                    const cost = Math.floor(Vec.distance(cell.pos, from) / w.MovementSpeed);
+                    const moveCost = Math.ceil(Math.max(0, Vec.l1(cell.pos, from) - w.DigRange) / w.MovementSpeed)
+                    const returnCost = Math.ceil(cell.pos.x / w.MovementSpeed);
+                    const cost = moveCost + returnCost;
+
                     const duplication = this.duplicationCost(cell.pos, otherActions);
+
                     const payoff = (belief.oreProbability() * Math.exp(-cost)) - duplication;
                     if (payoff > best) {
                         best = payoff;

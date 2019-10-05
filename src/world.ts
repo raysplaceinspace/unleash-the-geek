@@ -1,5 +1,6 @@
 import Vec from './util/vector';
 
+export const DigRange = 1;
 export const RadarRange = 5;
 export const TrapRange = 1;
 export const MovementSpeed = 4;
