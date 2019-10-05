@@ -143,7 +143,9 @@ export default class Agent {
                 type: "move",
                 target: new Vec(0, robot.pos.y),
             };
-        } else if (world.teams[0].radarCooldown === 0 && robot.pos.x === 0) {
+        } else if (robot.carrying === w.ItemType.None && world.teams[0].radarCooldown === 0 && robot.pos.x === 0
+            && !otherActions.some(a => a.type === "request" && a.item === w.ItemType.Radar)) {
+
             return {
                 entityId: robot.id,
                 type: "request",
