@@ -47,7 +47,11 @@ export default class Agent {
             if (robot.type === w.ItemType.RobotTeam0) {
                 const previousRobot = previous.entities.find(r => r.id === robot.id);
                 const previousAction = previous.actions.find(a => a.entityId === robot.id);
-                if (previousAction && previousAction.type === "dig") {
+                if (previousAction
+                    && previousAction.type === "dig"
+                    && Vec.l1(previousRobot.pos, robot.pos) === 0 // Stand still to dig
+                    && Vec.l1(previousAction.target, previousRobot.pos) <= 1) { // Must be next to cell to dig it
+
                     unexplainedDigs.delete(previousAction.target.string());
 
                     const target = previousAction.target;
