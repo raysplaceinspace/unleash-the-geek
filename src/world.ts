@@ -1,17 +1,18 @@
 import Vec from './util/vector';
 
-export const NumRobots = 5;
 export const RadarRange = 5;
 export const TrapRange = 1;
 export const MovementSpeed = 4;
 
 export interface World {
     tick: number;
+    numRobots: number;
     width: number;
     height: number;
     teams: Team[];
     map: Cell[][];
     entities: Entity[];
+    actions: Action[];
 }
 
 export interface Team {
@@ -50,6 +51,7 @@ export type Action =
     | RequestAction
 
 export interface ActionBase {
+    entityId: number;
     type: string;
     tag?: string;
 }
@@ -77,11 +79,13 @@ export interface RequestAction extends ActionBase {
 export function initialWorld(width: number, height: number): World {
     return {
         tick: 0,
+        numRobots: 5,
         width,
         height,
         teams: [initialTeam(0), initialTeam(1)],
         map: initialMap(width, height),
         entities: [],
+        actions: [],
     };
 }
 
@@ -108,4 +112,32 @@ function initialMap(width: number, height: number): Cell[][] {
         map.push(row);
     }
     return map;
+}
+
+export function clone(world: World): World {
+    return {
+        ...world,
+        teams: world.teams.map(cloneTeam),
+        map: world.map.map(row => row.map(cloneCell)),
+        entities: world.entities.map(cloneEntity),
+        actions: [...world.actions],
+    };
+}
+
+function cloneTeam(team: Team): Team {
+    return {
+        ...team,
+    };
+}
+
+function cloneCell(cell: Cell): Cell {
+    return {
+        ...cell,
+    };
+}
+
+function cloneEntity(entity: Entity): Entity {
+    return {
+        ...entity,
+    };
 }

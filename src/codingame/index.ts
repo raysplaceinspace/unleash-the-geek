@@ -91,17 +91,21 @@ function formatItemType(itemType: w.ItemType) {
 function main() {
     // initialisation
     let world = readInitial();
-    const agent = new Agent();
+    const agent = new Agent(world.width, world.height);
 
     // game loop
     while (true) {
-        readNext(world);
-        const actions = agent.choose(world, 0);
+        const next = w.clone(world);
+        readNext(next);
+
+        const actions = agent.choose(world, next, 0);
+        next.actions = actions;
 
         for (let i = 0; i < 5; i++) {
             console.log(formatAction(actions[i]));
         }
 
+        world = next;
         world.tick++;
     }
 }

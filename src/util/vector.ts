@@ -74,4 +74,7 @@ export default class Vec {
         return Math.atan2(this.y, this.x);
     }
 
+    string() {
+        return `${this.x},${this.y}`;
+    }
 }
