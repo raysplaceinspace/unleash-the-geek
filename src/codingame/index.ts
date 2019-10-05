@@ -55,8 +55,7 @@ function readNext(world: w.World) {
         entities.push({
             id,
             type,
-            x,
-            y,
+            pos: new Vec(x, y),
             carrying,
         });
     }
@@ -72,10 +71,20 @@ function formatAction(action: w.Action) {
 }
 
 function formatActionIntent(action: w.Action) {
-    if (action.type === "wait") {
-        return `WAIT`;
-    } else {
-        return "NULL";
+    switch (action.type) {
+        case "wait": return `WAIT`;
+        case "move": return `MOVE ${action.target.x} ${action.target.y}`;
+        case "dig": return `DIG ${action.target.x} ${action.target.y}`;
+        case "request": return `REQUEST ${formatItemType(action.item)}`;
+        default: return "NULL";
+    }
+}
+
+function formatItemType(itemType: w.ItemType) {
+    switch (itemType) {
+        case w.ItemType.Radar: return "RADAR";
+        case w.ItemType.Trap: return "TRAP";
+        default: return "NULL";
     }
 }
 
@@ -85,14 +94,10 @@ let world = readInitial();
 // game loop
 while (true) {
     readNext(world);
+    const actions = agent.choose(world, 0);
 
     for (let i = 0; i < 5; i++) {
-
-        // Write an action using console.log()
-        // To debug: console.error('Debug messages...');
-
-        const action = agent.choose(world, i);
-        console.log(formatAction(action));
+        console.log(formatAction(actions[i]));
     }
 
     world.tick++;

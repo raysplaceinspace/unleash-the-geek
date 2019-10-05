@@ -1,6 +1,11 @@
 import * as angles from '../util/angles';
 import { Vec } from '../util/vector';
 
+export const NumRobots = 5;
+export const RadarRange = 5;
+export const TrapRange = 1;
+export const MovementSpeed = 4;
+
 export enum ItemType {
     None = -1,
     RobotTeam0 = 0,
@@ -27,6 +32,7 @@ export interface Team {
 }
 
 export interface Cell {
+    pos: Vec;
     seen: number; // tick
     ore: number;
     hole: boolean;
@@ -35,13 +41,15 @@ export interface Cell {
 export interface Entity {
     id: number;
     type: ItemType;
-    x: number;
-    y: number;
+    pos: Vec;
     carrying?: number;
 }
 
 export type Action =
     WaitAction
+    | MoveAction
+    | DigAction
+    | RequestAction
 
 export interface ActionBase {
     type: string;
@@ -50,4 +58,19 @@ export interface ActionBase {
 
 export interface WaitAction extends ActionBase {
     type: "wait";
+}
+
+export interface MoveAction extends ActionBase {
+    type: "move";
+    target: Vec;
+}
+
+export interface DigAction extends ActionBase {
+    type: "dig";
+    target: Vec;
+}
+
+export interface RequestAction extends ActionBase {
+    type: "request";
+    item: ItemType;
 }

@@ -1,4 +1,5 @@
 import * as w from '../model/world';
+import Vec from '../util/vector';
 
 export function initialWorld(width: number, height: number): w.World {
     return {
@@ -22,10 +23,15 @@ function initialTeam(teamId: number): w.Team {
 
 function initialMap(width: number, height: number): w.Cell[][] {
     const map = new Array<w.Cell[]>();
-    for (let i = 0; i < height; ++i) {
+    for (let y = 0; y < height; ++y) {
         const row = new Array<w.Cell>();
-        for (let j = 0; j < width; ++j) {
-            row.push({ seen: null, ore: 0, hole: false });
+        for (let x = 0; x < width; ++x) {
+            row.push({
+                pos: new Vec(x, y),
+                seen: null,
+                ore: 0,
+                hole: false,
+            });
         }
         map.push(row);
     }

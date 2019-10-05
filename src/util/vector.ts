@@ -17,6 +17,10 @@ export class Vec {
         return Math.sqrt((xDiff * xDiff) + (yDiff * yDiff));
     }
 
+    static l1(to: Vec, from: Vec) {
+        return Math.abs(to.x - from.x) + Math.abs(to.y - from.y);
+    }
+
     static diff(to: Vec, from: Vec) {
         return new Vec(to.x - from.x, to.y - from.y);
     }
