@@ -33,6 +33,7 @@ export interface Entity {
     type: ItemType;
     pos: Vec;
     carrying?: number;
+    dead?: boolean;
 }
 
 export enum ItemType {

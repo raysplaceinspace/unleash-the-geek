@@ -57,6 +57,7 @@ function readNext(world: w.World) {
             type,
             pos: new Vec(x, y),
             carrying,
+            dead: x === -1,
         });
     }
     world.entities = entities;

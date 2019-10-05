@@ -53,13 +53,12 @@ export default class Agent {
                     unexplainedDigs.delete(previousAction.target.string());
 
                     const target = previousAction.target;
-                    if (previousRobot && previousRobot.carrying !== robot.carrying && robot.carrying === w.ItemType.Ore) {
-                        console.error(`Successful dig at ${target.string()}`);
-                        this.beliefs[target.y][target.x].observedSuccessfulDig();
-                    } else {
-                        console.error(`Unsuccessful dig at ${target.string()}`);
-                        this.beliefs[target.y][target.x].observedUnsuccessfulDig();
-                    }
+                    const success = previousRobot && previousRobot.carrying !== robot.carrying && robot.carrying === w.ItemType.Ore;
+
+                    this.beliefs[target.y][target.x].observedSelfDig(success);
+                    wu(neighbours(target, world)).forEach(p => {
+                        this.beliefs[p.y][p.x].observedNeighbour(success);
+                    });
                 }
             }
         });
@@ -72,7 +71,6 @@ export default class Agent {
                     if (!knownDig) {
                         wu(neighbours(previousRobot.pos, world)).forEach(n => {
                             if (world.map[n.y][n.x].hole) {
-                                console.error(`Enemy still near ${n.string()}`);
                                 this.beliefs[n.y][n.x].observedStillEnemy();
                             }
                         });
@@ -82,7 +80,6 @@ export default class Agent {
         });
 
         unexplainedDigs.forEach(dig => {
-            console.error(`Unexplained dig at ${dig.string()}`);
             this.beliefs[dig.y][dig.x].observedEnemyDig();
         });
 
@@ -90,11 +87,12 @@ export default class Agent {
             for (let x = 0; x < world.width; ++x) {
                 const cell = world.map[y][x];
                 if (typeof cell.ore === 'number') {
-                    if (cell.ore > 0) {
-                        this.beliefs[y][x].observedOre();
-                    } else {
-                        this.beliefs[y][x].observedNoOre();
-                    }
+                    const success = cell.ore > 0;
+
+                    this.beliefs[y][x].observedOre(success);
+                    wu(neighbours(cell.pos, world)).forEach(p => {
+                        this.beliefs[p.y][p.x].observedNeighbour(success);
+                    });
                 }
             }
         }
@@ -146,20 +144,22 @@ export default class Agent {
 
     private closestUndug(from: Vec, world: w.World) {
         let target = from;
-        let closest = Infinity;
+        let best = 0;
         for (let y = 0; y < world.height; ++y) {
             for (let x = 1; x < world.width; ++x) { // Start at 1 because cannot dig headquarter row
                 const cell = world.map[y][x];
                 const belief = this.beliefs[y][x];
-                if (belief.oreBelief >= 0 && belief.trapBelief <= 0) {
-                    const distance = Vec.distance(cell.pos, from);
-                    if (distance < closest) {
-                        closest = distance;
+                if (belief.trapBelief <= 0) {
+                    const cost = Math.floor(Vec.distance(cell.pos, from) / w.MovementSpeed);
+                    const payoff = belief.oreProbability() / (1 + cost);
+                    if (payoff > best) {
+                        best = payoff;
                         target = cell.pos;
                     }
                 }
             }
         }
+        console.error(`Targeting ${target.string()} with payoff ${best}`);
         return target;
     }
 }
@@ -168,33 +168,55 @@ class CellBelief {
     pos: Vec;
 
     oreBelief = 0;
+    oreKnown = 0;
     trapBelief = 0;
 
     constructor(pos: Vec) {
         this.pos = pos;
     }
 
-    observedSuccessfulDig() {
-        this.oreBelief += 10;
+    observedSelfDig(success: boolean) {
+        if (success) {
+            this.oreBelief += 1;
+        } else {
+            this.oreBelief = -1;
+            this.oreKnown = -1;
+        }
     }
 
-    observedUnsuccessfulDig() {
-        this.oreBelief = -1000;
+    observedNeighbour(success: boolean) {
+        if (success) {
+            this.oreBelief += 0.5;
+        } else {
+            this.oreBelief -= 0.5;
+        }
     }
 
     observedStillEnemy() {
-        this.trapBelief += 1;
+        this.trapBelief += 0.01;
     }
 
     observedEnemyDig() {
-        this.trapBelief += 10;
+        this.trapBelief += 0.1;
     }
 
-    observedOre() {
-        this.oreBelief = 1000;
+    observedOre(success: boolean) {
+        if (success) {
+            this.oreBelief = 1;
+            this.oreKnown = 1;
+        } else {
+            this.oreBelief = -1;
+            this.oreKnown = -1;
+        }
     }
 
-    observedNoOre() {
-        this.oreBelief = -1000;
+    oreProbability() {
+        if (this.oreKnown < 0) {
+            return 0;
+        } else if (this.oreKnown > 0) {
+            return 1;
+        } else {
+            return 1 / (1 + Math.exp(-this.oreBelief));
+        }
     }
 }
