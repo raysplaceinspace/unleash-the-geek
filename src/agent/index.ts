@@ -55,9 +55,10 @@ export default class Agent {
                     const target = previousAction.target;
                     const success = previousRobot && previousRobot.carrying !== robot.carrying && robot.carrying === w.ItemType.Ore;
 
-                    this.beliefs[target.y][target.x].observedSelfDig(success);
+                    const cellBelief = this.beliefs[target.y][target.x];
+                    cellBelief.observedSelfDig(success);
                     wu(neighbours(target, world)).forEach(p => {
-                        this.beliefs[p.y][p.x].observedNeighbour(success);
+                        this.beliefs[p.y][p.x].observedNeighbour(success, cellBelief);
                     });
                 }
             }
@@ -89,9 +90,10 @@ export default class Agent {
                 if (typeof cell.ore === 'number') {
                     const success = cell.ore > 0;
 
-                    this.beliefs[y][x].observedOre(success);
+                    const cellBelief = this.beliefs[y][x];
+                    cellBelief.observedOre(success);
                     wu(neighbours(cell.pos, world)).forEach(p => {
-                        this.beliefs[p.y][p.x].observedNeighbour(success);
+                        this.beliefs[p.y][p.x].observedNeighbour(success, cellBelief);
                     });
                 }
             }
@@ -152,7 +154,7 @@ export default class Agent {
                 if (belief.trapBelief <= 0) {
                     const cost = Math.floor(Vec.distance(cell.pos, from) / w.MovementSpeed);
                     const duplication = this.duplicationCost(cell.pos, otherActions);
-                    const payoff = (belief.oreProbability() / (1 + cost)) - duplication;
+                    const payoff = (belief.oreProbability() * Math.exp(-cost)) - duplication;
                     if (payoff > best) {
                         best = payoff;
                         target = cell.pos;
@@ -187,6 +189,7 @@ class CellBelief {
 
     oreBelief = 0;
     oreKnown = 0;
+    hadOre = false;
     trapBelief = 0;
 
     constructor(pos: Vec) {
@@ -197,15 +200,19 @@ class CellBelief {
         if (success) {
             this.oreBelief = 1;
             this.oreKnown = 1;
+            this.hadOre = true;
         } else {
             this.oreBelief = -1;
             this.oreKnown = -1;
         }
     }
 
-    observedNeighbour(success: boolean) {
+    observedNeighbour(success: boolean, neighbour: CellBelief) {
         if (success) {
             this.oreBelief += 1;
+        } else if (neighbour.hadOre) {
+            // The only reason we're unsuccessful is because we always dig until the neighbour doesn't have ore anymore,
+            // not because there is possibly no ore here
         } else {
             this.oreBelief -= 1;
         }
@@ -223,6 +230,7 @@ class CellBelief {
         if (success) {
             this.oreBelief = 1;
             this.oreKnown = 1;
+            this.hadOre = true;
         } else {
             this.oreBelief = -1;
             this.oreKnown = -1;
