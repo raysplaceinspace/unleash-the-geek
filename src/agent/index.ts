@@ -8,20 +8,15 @@ function withinBounds(p: Vec, world: w.World) {
     return 0 <= p.x && p.x < world.width && 0 <= p.y && p.y < world.height;
 }
 
-function* neighbours(pos: Vec, world: w.World): Iterable<Vec> {
-    for (const n of neighboursUntested(pos)) {
-        if (withinBounds(n, world)) {
-            yield n;
+function* neighbours(pos: Vec, world: w.World, range: number = 1): Iterable<Vec> {
+    for (let y = pos.y - range; y <= pos.y + range; ++y) {
+        for (let x = pos.x - range; x <= pos.x + range; ++x) {
+            const n = new Vec(x, y);
+            if (Vec.l1(pos, n) <= range && withinBounds(n, world)) {
+                yield n;
+            }
         }
     }
-}
-
-function* neighboursUntested(pos: Vec): Iterable<Vec> {
-    yield pos;
-    yield new Vec(pos.x + 1, pos.y);
-    yield new Vec(pos.x - 1, pos.y);
-    yield new Vec(pos.x, pos.y + 1);
-    yield new Vec(pos.x, pos.y - 1);
 }
 
 export default class Agent {
@@ -61,7 +56,7 @@ export default class Agent {
 
                     const cellBelief = this.beliefs[target.y][target.x];
                     cellBelief.observedSelfDig(success);
-                    for (const p of neighbours(target, world)) {
+                    for (const p of neighbours(target, world, 2)) {
                         this.beliefs[p.y][p.x].observedNeighbour(success, cellBelief);
                     }
                 }
@@ -96,9 +91,6 @@ export default class Agent {
 
                     const cellBelief = this.beliefs[y][x];
                     cellBelief.observedOre(success);
-                    for (const p of neighbours(cell.pos, world)) {
-                        this.beliefs[p.y][p.x].observedNeighbour(success, cellBelief);
-                    }
                 }
             }
         }
@@ -139,6 +131,13 @@ export default class Agent {
                 type: "move",
                 target: new Vec(0, robot.pos.y),
             };
+        } else if (world.teams[0].radarCooldown === 0 && robot.pos.x === 0) {
+            console.error("Requesting radar");
+            return {
+                entityId: robot.id,
+                type: "request",
+                item: w.ItemType.Radar,
+            };
         } else {
             return {
                 entityId: robot.id,
@@ -161,11 +160,10 @@ export default class Agent {
                 if (belief.trapBelief <= 0) {
                     const moveCost = Math.ceil(Math.max(0, Vec.l1(cell.pos, from) - w.DigRange) / w.MovementSpeed)
                     const returnCost = Math.ceil(cell.pos.x / w.MovementSpeed);
-                    const cost = moveCost + returnCost;
-
                     const duplication = this.duplicationCost(cell.pos, otherActions);
+                    const cost = moveCost + returnCost + duplication;
 
-                    const payoff = (belief.oreProbability() * Math.exp(-cost)) - duplication;
+                    const payoff = (belief.oreProbability() * Math.exp(-cost));
                     payoffs[y][x] = payoff;
                 }
             }
@@ -227,13 +225,16 @@ class CellBelief {
     }
 
     observedNeighbour(success: boolean, neighbour: CellBelief) {
+        const distance = Vec.l1(this.pos, neighbour.pos);
+        const modifier = Math.exp(-distance);
+
         if (success) {
-            this.oreBelief += 1;
+            this.oreBelief += 10 * modifier;
         } else if (neighbour.hadOre) {
             // The only reason we're unsuccessful is because we always dig until the neighbour doesn't have ore anymore,
             // not because there is possibly no ore here
         } else {
-            this.oreBelief -= 1;
+            this.oreBelief -= 5 * modifier;
         }
     }
 
