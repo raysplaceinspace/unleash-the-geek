@@ -1,4 +1,3 @@
-import * as wu from 'wu';
 import * as w from '../world';
 import * as angles from '../util/angles';
 import * as log from '../log';
@@ -74,13 +73,19 @@ export default class Agent {
             if (robot.type === w.ItemType.RobotTeam1 && !robot.dead) {
                 const previousRobot = previous.entities.find(r => r.id === robot.id);
                 if (previousRobot && previousRobot.pos.x === robot.pos.x && previousRobot.pos.y === robot.pos.y) {
-                    const knownDig = wu(unexplainedDigs.values()).some(dig => Vec.l1(dig, previousRobot.pos) <= w.DigRange);
+                    let knownDig = false;
+                    for (const dig of unexplainedDigs.values()) {
+                        if (Vec.l1(dig, previousRobot.pos) <= w.DigRange) {
+                            knownDig = true;
+                            break;
+                        }
+                    }
                     if (!knownDig) {
-                        wu(neighbours(previousRobot.pos, world)).forEach(n => {
+                        for (const n of neighbours(previousRobot.pos, world)) {
                             if (world.map[n.y][n.x].hole) {
                                 this.beliefs[n.y][n.x].observedStillEnemy();
                             }
-                        });
+                        }
                     }
                 }
             }
