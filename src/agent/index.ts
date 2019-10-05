@@ -186,9 +186,16 @@ export default class Agent {
                 const returnCost = Math.ceil(cell.pos.x / w.MovementSpeed);
                 const radarCost = hasRadar ? this.radarCost(cell.pos, world) : 0;
                 const duplication = this.duplicationCost(cell.pos, otherActions);
-                const cost = moveCost + returnCost + radarCost + duplication;
+                const cost =
+                    0.1 * moveCost
+                    + 0.1 * returnCost
+                    + radarCost
+                    + duplication;
 
-                const payoff = Math.exp(-cost) * belief.oreProbability() * Math.min(1, Math.exp(-belief.trapBelief));
+                const payoff =
+                    belief.oreProbability()
+                    * Math.exp(-cost)
+                    * Math.min(1, Math.exp(-belief.trapBelief));
                 payoffs[y][x] = payoff;
             }
         }
@@ -208,20 +215,9 @@ export default class Agent {
     }
 
     private duplicationCost(target: Vec, otherActions: w.Action[]): number {
-        const DuplicationRange = 1;
-
-        const outside = DuplicationRange + 1;
-        let closest = outside;
-        otherActions.forEach(action => {
-            if (action && action.type === "dig") {
-                const distance = Vec.l1(action.target, target);
-                if (distance < closest) {
-                    closest = distance;
-                }
-            }
-        });
-
-        return outside - closest;
+        const DuplicateCost = 10;
+        const duplicate = otherActions.some(a => a.type === "dig" && a.target.x === target.x && a.target.y === target.y);
+        return duplicate ? DuplicateCost : 0;
     }
 
     private radarCost(target: Vec, world: w.World): number {
@@ -273,7 +269,7 @@ class CellBelief {
             // The only reason we're unsuccessful is because we always dig until the neighbour doesn't have ore anymore,
             // not because there is possibly no ore here
         } else {
-            this.oreBelief -= 5 * modifier;
+            this.oreBelief -= 10 * modifier;
         }
     }
 
