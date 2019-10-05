@@ -8,8 +8,12 @@ function withinBounds(p: Vec, world: w.World) {
     return 0 <= p.x && p.x < world.width && 0 <= p.y && p.y < world.height;
 }
 
-function neighbours(pos: Vec, world: w.World): Iterable<Vec> {
-    return wu(neighboursUntested(pos)).filter(p => withinBounds(p, world));
+function* neighbours(pos: Vec, world: w.World): Iterable<Vec> {
+    for (const n of neighboursUntested(pos)) {
+        if (withinBounds(n, world)) {
+            yield n;
+        }
+    }
 }
 
 function* neighboursUntested(pos: Vec): Iterable<Vec> {
@@ -57,9 +61,9 @@ export default class Agent {
 
                     const cellBelief = this.beliefs[target.y][target.x];
                     cellBelief.observedSelfDig(success);
-                    wu(neighbours(target, world)).forEach(p => {
+                    for (const p of neighbours(target, world)) {
                         this.beliefs[p.y][p.x].observedNeighbour(success, cellBelief);
-                    });
+                    }
                 }
             }
         });
@@ -92,9 +96,9 @@ export default class Agent {
 
                     const cellBelief = this.beliefs[y][x];
                     cellBelief.observedOre(success);
-                    wu(neighbours(cell.pos, world)).forEach(p => {
+                    for (const p of neighbours(cell.pos, world)) {
                         this.beliefs[p.y][p.x].observedNeighbour(success, cellBelief);
-                    });
+                    }
                 }
             }
         }
@@ -147,8 +151,11 @@ export default class Agent {
     private closestUndug(from: Vec, world: w.World, otherActions: w.Action[]) {
         let target = from;
         let best = 0;
+
+        const payoffs = new Array<number[]>();
         for (let y = 0; y < world.height; ++y) {
-            for (let x = 1; x < world.width; ++x) { // Start at 1 because cannot dig headquarter row
+            payoffs[y] = new Array<number>();
+            for (let x = 0; x < world.width; ++x) {
                 const cell = world.map[y][x];
                 const belief = this.beliefs[y][x];
                 if (belief.trapBelief <= 0) {
@@ -159,10 +166,18 @@ export default class Agent {
                     const duplication = this.duplicationCost(cell.pos, otherActions);
 
                     const payoff = (belief.oreProbability() * Math.exp(-cost)) - duplication;
-                    if (payoff > best) {
-                        best = payoff;
-                        target = cell.pos;
-                    }
+                    payoffs[y][x] = payoff;
+                }
+            }
+        }
+
+        for (let y = 0; y < world.height; ++y) {
+            for (let x = 1; x < world.width; ++x) { // Start at 1 because cannot dig headquarter row
+                const cell = world.map[y][x];
+                const payoff = payoffs[y][x];
+                if (payoff > best) {
+                    best = payoff;
+                    target = cell.pos;
                 }
             }
         }
@@ -242,7 +257,9 @@ class CellBelief {
     }
 
     oreProbability() {
-        if (this.oreKnown < 0) {
+        if (this.pos.x === 0) {
+            return 0; // Never any ore in the headquarter row
+        } else if (this.oreKnown < 0) {
             return 0;
         } else if (this.oreKnown > 0) {
             return 1;
