@@ -101,7 +101,7 @@ function main() {
         const actions = agent.choose(world, next, 0);
         next.actions = actions;
 
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < actions.length; i++) {
             console.log(formatAction(actions[i]));
         }
 

@@ -39,12 +39,10 @@ export default class Agent {
     }
 
     choose(previous: w.World, world: w.World, teamId: number): w.Action[] {
-        const robotBaseIndex = world.numRobots * teamId;
-
         const allDigs = this.findDigs(previous, world);
         const unexplainedDigs = new Map(allDigs);
         world.entities.forEach(robot => {
-            if (robot.type === w.ItemType.RobotTeam0) {
+            if (robot.type === w.ItemType.RobotTeam0 && !robot.dead) {
                 const previousRobot = previous.entities.find(r => r.id === robot.id);
                 const previousAction = previous.actions.find(a => a.entityId === robot.id);
                 if (previousAction
@@ -67,7 +65,7 @@ export default class Agent {
         });
 
         world.entities.forEach(robot => {
-            if (robot.type === w.ItemType.RobotTeam1) {
+            if (robot.type === w.ItemType.RobotTeam1 && !robot.dead) {
                 const previousRobot = previous.entities.find(r => r.id === robot.id);
                 if (previousRobot && previousRobot.pos.x === robot.pos.x && previousRobot.pos.y === robot.pos.y) {
                     const knownDig = wu(unexplainedDigs.values()).some(dig => Vec.l1(dig, previousRobot.pos) <= 1);
@@ -102,16 +100,9 @@ export default class Agent {
         }
 
         const actions = new Array<w.Action>();
-        for (let i = 0; i < world.numRobots; ++i) {
-            actions.push({
-                entityId: robotBaseIndex + i,
-                type: "wait",
-            });
-        }
-
         const robots = world.entities.filter(r => r.type === w.ItemType.RobotTeam0);
         for (const robot of robots) {
-            actions[robot.id - robotBaseIndex] = this.chooseForRobot(world, robot);
+            actions.push(this.chooseForRobot(world, robot));
         }
 
         return actions;
@@ -133,7 +124,12 @@ export default class Agent {
     }
 
     private chooseForRobot(world: w.World, robot: w.Entity): w.Action {
-        if (robot.carrying === w.ItemType.Ore) {
+        if (robot.dead) {
+            return {
+                entityId: robot.id,
+                type: "wait",
+            }
+        } else if (robot.carrying === w.ItemType.Ore) {
             return {
                 entityId: robot.id,
                 type: "move",
