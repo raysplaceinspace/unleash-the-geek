@@ -181,7 +181,6 @@ export default class Agent {
                 entityId: robot.id,
                 type: "dig",
                 target: this.closestUndug(robot, world, otherActions),
-                tag: `${robot.carrying}`,
             }
         }
     }
