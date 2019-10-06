@@ -199,20 +199,20 @@ export default class Agent {
 
                 const destination = this.moveNeighbour(robot.pos, cell.pos, world);
 
-                const moveCost = Vec.l1(cell.pos, destination) / w.MovementSpeed;
+                const moveCost = Math.ceil(Vec.l1(cell.pos, destination) / w.MovementSpeed);
                 const returnCost = Math.ceil(destination.x / w.MovementSpeed);
                 const radarCost = hasRadar ? this.radarCost(cell.pos, world) : 0;
                 const explosionCost = trapMap[destination.y][destination.x];
                 const duplication = this.duplicationCost(cell.pos, otherActions);
                 const cost =
-                    0.2 * moveCost
+                    1 * moveCost
                     + 0.1 * returnCost
                     + 1 * radarCost
                     + 1 * duplication
                     + 1 * explosionCost;
 
                 const payoff =
-                    Math.exp(-cost) * belief.oreProbability()
+                    belief.oreProbability() / (1 + cost)
                     - 10 * belief.trapProbability();
 
                 payoffs[y][x] = payoff;
