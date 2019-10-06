@@ -97,7 +97,6 @@ export default class Agent {
                     for (const dig of unexplainedDigs.values()) {
                         if (Vec.l1(dig, previousRobot.pos) <= w.DigRange) {
                             knownDig.push(dig);
-                            break;
                         }
                     }
 
