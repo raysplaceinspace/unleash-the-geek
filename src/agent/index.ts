@@ -27,6 +27,7 @@ function distanceToEdge(p: Vec, world: w.World) {
 
 export default class Agent {
     private beliefs: CellBelief[][];
+    private enemyBeliefs = new Map<number, EnemyRobotBelief>();
 
     constructor(width: number, height: number) {
         this.beliefs = Agent.initialBeliefs(width, height);
@@ -46,7 +47,7 @@ export default class Agent {
     choose(previous: w.World, world: w.World): w.Action[] {
         this.updateBeliefsFromDigs(previous, world);
         this.updateBeliefsFromMap(world);
-        this.updateBeliefsFromEntities(world);
+        this.updateBeliefsFromEntities(previous, world);
 
         const trapMap = this.generateTrapMap(world);
 
@@ -75,6 +76,7 @@ export default class Agent {
 
                     const target = previousAction.target;
                     const success = previousRobot && previousRobot.carrying !== robot.carrying && robot.carrying === w.ItemType.Ore;
+                    console.error(`Self dig ${robot.id}, success=${success}`);
 
                     const cellBelief = this.beliefs[target.y][target.x];
                     cellBelief.observedSelfDig(success);
@@ -87,28 +89,50 @@ export default class Agent {
 
         world.entities.forEach(robot => {
             if (robot.type === w.ItemType.RobotTeam1 && !robot.dead) {
+                const robotBelief = this.getOrCreateEnemyBelief(robot.id);
+
                 const previousRobot = previous.entities.find(r => r.id === robot.id);
                 if (previousRobot && previousRobot.pos.x === robot.pos.x && previousRobot.pos.y === robot.pos.y) {
-                    let knownDig = false;
+                    let knownDig = new Array<Vec>();
                     for (const dig of unexplainedDigs.values()) {
                         if (Vec.l1(dig, previousRobot.pos) <= w.DigRange) {
-                            knownDig = true;
+                            knownDig.push(dig);
                             break;
                         }
                     }
-                    if (!knownDig) {
+
+                    const carryingProbability = robotBelief.carryingProbability();
+                    if (knownDig.length > 0) {
+                        console.error(`Enemy dig ${robot.id}: carrying=${carryingProbability.toFixed(2)} at ${knownDig.map(x => x.string()).join(' ')}`);
+
+                        robotBelief.observedEnemyDig();
+
+                        for (const dig of knownDig) {
+                            this.beliefs[dig.y][dig.x].observedEnemyDig(carryingProbability);
+                        }
+
+                    } else {
+                        let potentialDig = false;
                         for (const n of neighbours(previousRobot.pos, world)) {
                             if (world.map[n.y][n.x].hole) {
-                                this.beliefs[n.y][n.x].observedStillEnemy();
+                                potentialDig = true;
+                                this.beliefs[n.y][n.x].observedStillEnemy(carryingProbability);
                             }
                         }
+
+                        if (potentialDig) {
+                            console.error(`Enemy still ${robot.id}: carrying=${carryingProbability.toFixed(2)}`);
+                            robotBelief.observedPotentialDig();
+                        }
+                    }
+
+                    if (robot.pos.x === 0) {
+                        // Stood still at headquarters
+                        console.error(`Enemy pickup ${robot.id} possible`);
+                        robotBelief.observedStillAtHeadquarters();
                     }
                 }
             }
-        });
-
-        unexplainedDigs.forEach(dig => {
-            this.beliefs[dig.y][dig.x].observedEnemyDig();
         });
     }
 
@@ -126,13 +150,22 @@ export default class Agent {
         }
     }
 
-    private updateBeliefsFromEntities(world: w.World) {
+    private updateBeliefsFromEntities(previous: w.World, world: w.World) {
         world.entities.forEach(entity => {
             if (entity.type === w.ItemType.Trap) {
                 const cellBelief = this.beliefs[entity.pos.y][entity.pos.x];
                 cellBelief.observedTrap();
             }
         });
+    }
+
+    private getOrCreateEnemyBelief(robotId: number) {
+        let enemyBelief = this.enemyBeliefs.get(robotId)
+        if (!enemyBelief) {
+            enemyBelief = new EnemyRobotBelief(robotId);
+            this.enemyBeliefs.set(robotId, enemyBelief);
+        }
+        return enemyBelief;
     }
 
     private findDigs(previous: w.World, world: w.World): Map<string, Vec> {
@@ -338,12 +371,16 @@ class CellBelief {
         }
     }
 
-    observedStillEnemy() {
-        this.trapBelief += 1;
+    observedStillEnemy(carryingProbability: number) {
+        if (carryingProbability > 0) {
+            this.trapBelief += 1;
+        }
     }
 
-    observedEnemyDig() {
-        this.trapBelief += 1;
+    observedEnemyDig(carryingProbability: number) {
+        if (carryingProbability > 0) {
+            this.trapBelief += 1;
+        }
     }
 
     observedOre(success: boolean) {
@@ -384,5 +421,28 @@ class CellBelief {
         } else {
             return 1 - Math.exp(-this.trapBelief); // zero trap belief = 0 probability of a trap 
         }
+    }
+}
+
+class EnemyRobotBelief {
+    carryingBelief = 0;
+
+    constructor(public entityId: number) {
+    }
+
+    observedStillAtHeadquarters() {
+        this.carryingBelief = 1;
+    }
+
+    observedEnemyDig() {
+        this.carryingBelief = -1;
+    }
+
+    observedPotentialDig() {
+        this.carryingBelief -= 0.1;
+    }
+
+    carryingProbability() {
+        return Math.max(0, 1 - Math.exp(-this.carryingBelief)); // zero probability if zero belief
     }
 }
