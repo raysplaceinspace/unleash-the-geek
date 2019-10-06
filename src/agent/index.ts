@@ -207,7 +207,7 @@ export default class Agent {
                 const cost =
                     1 * moveCost
                     + 0.1 * returnCost
-                    + 1 * radarCost
+                    + 3 * radarCost
                     + 1 * duplication
                     + 1 * explosionCost;
 
