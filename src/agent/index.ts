@@ -177,15 +177,11 @@ export default class Agent {
                 item: w.ItemType.Trap,
             };
         } else {
-            return {
-                entityId: robot.id,
-                type: "dig",
-                target: this.closestUndug(robot, world, otherActions),
-            }
+            return this.closestUndug(robot, world, otherActions);
         }
     }
 
-    private closestUndug(robot: w.Entity, world: w.World, otherActions: w.Action[]) {
+    private closestUndug(robot: w.Entity, world: w.World, otherActions: w.Action[]): w.Action {
         const hasRadar = robot.carrying === w.ItemType.Radar;
         const hasTrap = robot.carrying === w.ItemType.Trap;
 
@@ -227,8 +223,13 @@ export default class Agent {
                 }
             }
         }
-        console.error(`Targeting ${target.string()} with payoff ${best}`);
-        return target;
+
+        return {
+            entityId: robot.id,
+            type: "dig",
+            target,
+            tag: `${best.toFixed(2)}`,
+        }
     }
 
     private duplicationCost(target: Vec, otherActions: w.Action[]): number {
