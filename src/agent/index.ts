@@ -168,7 +168,7 @@ export default class Agent {
                 type: "request",
                 item: w.ItemType.Radar,
             };
-        } else if (robot.carrying === w.ItemType.None && world.teams[0].radarCooldown === 0 && robot.pos.x === 0
+        } else if (robot.carrying === w.ItemType.None && world.teams[0].trapCooldown === 0 && robot.pos.x === 0
             && !otherActions.some(a => a.type === "request" && a.item === w.ItemType.Trap)) {
 
             return {
@@ -187,6 +187,8 @@ export default class Agent {
 
         let target = robot.pos;
         let best = 0;
+        
+        const trapMap = this.generateTrapMap(world);
 
         const payoffs = new Array<number[]>();
         for (let y = 0; y < world.height; ++y) {
@@ -195,15 +197,19 @@ export default class Agent {
                 const cell = world.map[y][x];
                 const belief = this.beliefs[y][x];
 
-                const moveCost = Math.ceil(Math.max(0, Vec.l1(cell.pos, robot.pos) - w.DigRange) / w.MovementSpeed)
-                const returnCost = Math.ceil(cell.pos.x / w.MovementSpeed);
+                const destination = this.moveNeighbour(robot.pos, cell.pos, world);
+
+                const moveCost = Math.ceil(Vec.l1(cell.pos, destination) / w.MovementSpeed)
+                const returnCost = Math.ceil(destination.x / w.MovementSpeed);
                 const radarCost = hasRadar ? this.radarCost(cell.pos, world) : 0;
+                const explosionCost = trapMap[destination.y][destination.x];
                 const duplication = this.duplicationCost(cell.pos, otherActions);
                 const cost =
                     0.1 * moveCost
                     + 0.1 * returnCost
                     + 1 * radarCost
-                    + 1 * duplication;
+                    + 1 * duplication
+                    + 1 * explosionCost;
 
                 const payoff =
                     Math.exp(-cost) * belief.oreProbability()
@@ -230,6 +236,45 @@ export default class Agent {
             target,
             tag: `${best.toFixed(2)}`,
         }
+    }
+
+    private moveNeighbour(from: Vec, to: Vec, world: w.World) {
+        let closest = to;
+        let closestDistance = Infinity;
+
+        for (const n of neighbours(to, world)) {
+            const distance = Vec.l1(from, n);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closest = n;
+            }
+        }
+        return closest;
+    }
+    
+    private generateTrapMap(world: w.World): number[][] {
+        const trapMap = new Array<number[]>();
+        for (let y = 0; y < world.height; ++y) {
+            trapMap[y] = new Array<number>();
+            for (let x = 0; x < world.width; ++x) {
+                trapMap[y][x] = 0;
+            }
+        }
+
+        world.entities.forEach(enemy => {
+            if (enemy.type === w.ItemType.RobotTeam1) {
+                for (const trap of neighbours(enemy.pos, world)) {
+                    const trapProbability = this.beliefs[trap.y][trap.x].trapProbability();
+                    if (trapProbability > 0) {
+                        for (const explosion of neighbours(trap, world)) {
+                            trapMap[explosion.y][explosion.x] += trapProbability;
+                        }
+                    }
+                }
+            }
+        });
+
+        return trapMap;
     }
 
     private duplicationCost(target: Vec, otherActions: w.Action[]): number {
