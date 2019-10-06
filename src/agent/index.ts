@@ -109,22 +109,11 @@ export default class Agent {
 
         const actions = new Array<w.Action>();
         const robots = world.entities.filter(r => r.type === w.ItemType.RobotTeam0);
-        const leftmost = this.leftmostRobot(robots);
         for (const robot of robots) {
-            actions.push(this.chooseForRobot(world, robot, leftmost, actions));
+            actions.push(this.chooseForRobot(world, robot, actions));
         }
 
         return actions;
-    }
-
-    private leftmostRobot(robots: w.Entity[]): w.Entity {
-        let leftmost: w.Entity = null;
-        for (const robot of robots) {
-            if (!leftmost || robot.pos.x < leftmost.pos.x) {
-                leftmost = robot;
-            }
-        }
-        return leftmost;
     }
 
     private findDigs(previous: w.World, world: w.World): Map<string, Vec> {
@@ -142,7 +131,7 @@ export default class Agent {
         return result;
     }
 
-    private chooseForRobot(world: w.World, robot: w.Entity, leftmost: w.Entity, otherActions: w.Action[]): w.Action {
+    private chooseForRobot(world: w.World, robot: w.Entity, otherActions: w.Action[]): w.Action {
         if (robot.dead) {
             return {
                 entityId: robot.id,
@@ -154,7 +143,7 @@ export default class Agent {
                 type: "request",
                 item: w.ItemType.Radar,
             };
-        } else if (robot.carrying === w.ItemType.None && world.teams[0].radarCooldown === 0 && robot === leftmost
+        } else if (robot.carrying === w.ItemType.None && world.teams[0].radarCooldown === 0 && robot.pos.x === 0
             && !otherActions.some(a => a.type === "request" && a.item === w.ItemType.Radar)) {
 
             return {
