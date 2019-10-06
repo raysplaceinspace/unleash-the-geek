@@ -236,12 +236,14 @@ export default class Agent {
                 const moveCost = Math.ceil(Vec.l1(robot.pos, destination) / w.MovementSpeed);
                 const returnCost = Math.ceil(destination.x / w.MovementSpeed);
                 const radarCost = hasRadar ? this.radarCost(cell.pos, world) : 0;
+                const placementCost = hasTrap ? this.placementCost(cell.pos, world) : 0;
                 const explosionCost = trapMap[destination.y][destination.x];
                 const duplication = this.duplicationCost(cell.pos, otherActions);
                 const cost =
                     0.1 * digCost
-                    1 * moveCost
+                    + 1 * moveCost
                     + 0.1 * returnCost
+                    + 1 + placementCost
                     + 3 * radarCost
                     + 1 * duplication
                     + 1 * explosionCost;
@@ -316,6 +318,22 @@ export default class Agent {
         const DuplicateCost = 10;
         const duplicate = otherActions.some(a => a.type === "dig" && a.target.x === target.x && a.target.y === target.y);
         return duplicate ? DuplicateCost : 0;
+    }
+
+    private placementCost(target: Vec, world: w.World): number {
+        const PlacementRange = 5;
+        const outside = PlacementRange + 1;
+        let closest = outside;
+        world.entities.forEach(enemy => {
+            if (enemy && enemy.type === w.ItemType.RobotTeam1) {
+                const distance = Vec.l1(enemy.pos, target);
+                if (distance < closest) {
+                    closest = distance;
+                }
+            }
+        });
+
+        return (outside - closest) / outside;
     }
 
     private radarCost(target: Vec, world: w.World): number {
