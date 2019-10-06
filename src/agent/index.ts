@@ -221,8 +221,8 @@ export default class Agent {
     }
 
     private radarCost(target: Vec, world: w.World): number {
-        const outside = 2 * w.RadarRange + 1;
-        let closest = Math.min(outside, distanceToEdge(target, world));
+        const outside = 2 * w.RadarRange + 1; // 2x because two radars have overlapping range
+        let closest = Math.min(outside, 2 * distanceToEdge(target, world)); // edge doesn't have a radar attached, so double it to match scale
         world.entities.forEach(radar => {
             if (radar && radar.type === w.ItemType.Radar) {
                 const distance = Vec.l1(radar.pos, target);
