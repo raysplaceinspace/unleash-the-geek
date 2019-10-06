@@ -63,7 +63,8 @@ export default class Agent {
         const actions = new Map<number, w.Action>();
         const robots = world.entities.filter(r => r.type === w.ItemType.RobotTeam0);
         for (const robot of robots) {
-            actions.set(robot.id, this.chooseForRobot(world, robot, trapMap, actions.values()));
+            const action = this.chooseForRobot(world, robot, trapMap, [...actions.values()]);
+            actions.set(robot.id, action);
         }
 
         return robots.map(robot => actions.get(robot.id));
@@ -191,7 +192,7 @@ export default class Agent {
         return result;
     }
 
-    private chooseForRobot(world: w.World, robot: w.Entity, trapMap: number[][], otherActions: Iterable<w.Action>): w.Action {
+    private chooseForRobot(world: w.World, robot: w.Entity, trapMap: number[][], otherActions: w.Action[]): w.Action {
         if (robot.dead) {
             return {
                 entityId: robot.id,
@@ -204,7 +205,7 @@ export default class Agent {
                 item: w.ItemType.Radar,
             };
         } else if (robot.carrying === w.ItemType.None && world.teams[0].radarCooldown === 0 && robot.pos.x === 0
-            && !some(otherActions, a => a.type === "request" && a.item === w.ItemType.Radar)) {
+            && !otherActions.some(a => a.type === "request" && a.item === w.ItemType.Radar)) {
 
             return {
                 entityId: robot.id,
@@ -212,7 +213,7 @@ export default class Agent {
                 item: w.ItemType.Radar,
             };
         } else if (robot.carrying === w.ItemType.None && world.teams[0].trapCooldown === 0 && robot.pos.x === 0
-            && !some(otherActions, a => a.type === "request" && a.item === w.ItemType.Trap)) {
+            && !otherActions.some(a => a.type === "request" && a.item === w.ItemType.Trap)) {
 
             return {
                 entityId: robot.id,
@@ -224,7 +225,7 @@ export default class Agent {
         }
     }
 
-    private closestUndug(robot: w.Entity, world: w.World, trapMap: number[][], otherActions: Iterable<w.Action>): w.Action {
+    private closestUndug(robot: w.Entity, world: w.World, trapMap: number[][], otherActions: w.Action[]): w.Action {
         const hasRadar = robot.carrying === w.ItemType.Radar;
         const hasTrap = robot.carrying === w.ItemType.Trap;
 
@@ -253,7 +254,7 @@ export default class Agent {
                     + 0.25 * returnCost
                     + 1 + placementCost
                     + 3 * radarCost
-                    + 1 * duplication
+                    + 10 * duplication
                     + 1 * explosionCost;
 
                 const payoff =
@@ -336,10 +337,9 @@ export default class Agent {
         }
     }
 
-    private duplicationCost(target: Vec, otherActions: Iterable<w.Action>): number {
-        const DuplicateCost = 10;
-        const duplicate = some(otherActions, a => a.type === "dig" && a.target.x === target.x && a.target.y === target.y);
-        return duplicate ? DuplicateCost : 0;
+    private duplicationCost(target: Vec, otherActions: w.Action[]): number {
+        const duplicate = otherActions.some(a => a.type === "dig" && a.target.x === target.x && a.target.y === target.y);
+        return duplicate ? 1 : 0;
     }
 
     private placementCost(target: Vec, world: w.World): number {
