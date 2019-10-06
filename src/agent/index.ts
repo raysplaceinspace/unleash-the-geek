@@ -232,12 +232,14 @@ export default class Agent {
 
                 const destination = this.moveNeighbour(robot.pos, cell.pos, world);
 
-                const moveCost = Math.ceil(Vec.l1(cell.pos, destination) / w.MovementSpeed);
+                const digCost = Vec.l1(robot.pos, cell.pos) <= w.DigRange ? 0 : 1;
+                const moveCost = Math.ceil(Vec.l1(robot.pos, destination) / w.MovementSpeed);
                 const returnCost = Math.ceil(destination.x / w.MovementSpeed);
                 const radarCost = hasRadar ? this.radarCost(cell.pos, world) : 0;
                 const explosionCost = trapMap[destination.y][destination.x];
                 const duplication = this.duplicationCost(cell.pos, otherActions);
                 const cost =
+                    1 * digCost
                     1 * moveCost
                     + 0.1 * returnCost
                     + 3 * radarCost
