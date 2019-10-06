@@ -189,8 +189,8 @@ export default class Agent {
                 const cost =
                     0.1 * moveCost
                     + 0.1 * returnCost
-                    + radarCost
-                    + duplication;
+                    + 1 * radarCost
+                    + 1 * duplication;
 
                 const payoff =
                     belief.oreProbability()
@@ -232,7 +232,7 @@ export default class Agent {
             }
         });
 
-        return outside - closest;
+        return (outside - closest) / outside;
     }
 }
 
