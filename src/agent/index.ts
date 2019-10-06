@@ -242,7 +242,7 @@ export default class Agent {
                 const cost =
                     0.1 * digCost
                     + 1 * moveCost
-                    + 0.1 * returnCost
+                    + 0.25 * returnCost
                     + 1 + placementCost
                     + 3 * radarCost
                     + 1 * duplication
@@ -271,7 +271,7 @@ export default class Agent {
             entityId: robot.id,
             type: "dig",
             target,
-            tag: `${best.toFixed(2)}`,
+            tag: `${(100 * best).toFixed(0)}%`,
         }
     }
 
