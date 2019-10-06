@@ -19,5 +19,5 @@ export function testAgent() {
         pos: new Vec(0, 5),
         carrying: w.ItemType.None,
     });
-    const actions = agent.choose(world, next, 0);
+    const actions = agent.choose(world, next);
 }

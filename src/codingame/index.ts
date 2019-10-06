@@ -99,7 +99,7 @@ function main() {
         const next = w.clone(world);
         readNext(next);
 
-        const actions = agent.choose(world, next, 0);
+        const actions = agent.choose(world, next);
         next.actions = actions;
 
         for (let i = 0; i < actions.length; i++) {

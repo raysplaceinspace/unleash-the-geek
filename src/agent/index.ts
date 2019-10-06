@@ -43,7 +43,21 @@ export default class Agent {
         return beliefs;
     }
 
-    choose(previous: w.World, world: w.World, teamId: number): w.Action[] {
+    choose(previous: w.World, world: w.World): w.Action[] {
+        this.updateBeliefsFromDigs(previous, world);
+        this.updateBeliefsFromMap(world);
+        this.updateBeliefsFromEntities(world);
+
+        const actions = new Array<w.Action>();
+        const robots = world.entities.filter(r => r.type === w.ItemType.RobotTeam0);
+        for (const robot of robots) {
+            actions.push(this.chooseForRobot(world, robot, actions));
+        }
+
+        return actions;
+    }
+
+    private updateBeliefsFromDigs(previous: w.World, world: w.World) {
         const allDigs = this.findDigs(previous, world);
         const unexplainedDigs = new Map(allDigs);
         world.entities.forEach(robot => {
@@ -94,7 +108,9 @@ export default class Agent {
         unexplainedDigs.forEach(dig => {
             this.beliefs[dig.y][dig.x].observedEnemyDig();
         });
+    }
 
+    private updateBeliefsFromMap(world: w.World) {
         for (let y = 0; y < world.height; ++y) {
             for (let x = 0; x < world.width; ++x) {
                 const cell = world.map[y][x];
@@ -106,14 +122,15 @@ export default class Agent {
                 }
             }
         }
+    }
 
-        const actions = new Array<w.Action>();
-        const robots = world.entities.filter(r => r.type === w.ItemType.RobotTeam0);
-        for (const robot of robots) {
-            actions.push(this.chooseForRobot(world, robot, actions));
-        }
-
-        return actions;
+    private updateBeliefsFromEntities(world: w.World) {
+        world.entities.forEach(entity => {
+            if (entity.type === w.ItemType.Trap) {
+                const cellBelief = this.beliefs[entity.pos.y][entity.pos.x];
+                cellBelief.observedTrap();
+            }
+        });
     }
 
     private findDigs(previous: w.World, world: w.World): Map<string, Vec> {
@@ -151,17 +168,29 @@ export default class Agent {
                 type: "request",
                 item: w.ItemType.Radar,
             };
+        } else if (robot.carrying === w.ItemType.None && world.teams[0].radarCooldown === 0 && robot.pos.x === 0
+            && !otherActions.some(a => a.type === "request" && a.item === w.ItemType.Trap)) {
+
+            return {
+                entityId: robot.id,
+                type: "request",
+                item: w.ItemType.Trap,
+            };
         } else {
             return {
                 entityId: robot.id,
                 type: "dig",
-                target: this.closestUndug(robot.pos, robot.carrying === w.ItemType.Radar, world, otherActions),
+                target: this.closestUndug(robot, world, otherActions),
+                tag: `${robot.carrying}`,
             }
         }
     }
 
-    private closestUndug(from: Vec, hasRadar: boolean, world: w.World, otherActions: w.Action[]) {
-        let target = from;
+    private closestUndug(robot: w.Entity, world: w.World, otherActions: w.Action[]) {
+        const hasRadar = robot.carrying === w.ItemType.Radar;
+        const hasTrap = robot.carrying === w.ItemType.Trap;
+
+        let target = robot.pos;
         let best = 0;
 
         const payoffs = new Array<number[]>();
@@ -171,7 +200,7 @@ export default class Agent {
                 const cell = world.map[y][x];
                 const belief = this.beliefs[y][x];
 
-                const moveCost = Math.ceil(Math.max(0, Vec.l1(cell.pos, from) - w.DigRange) / w.MovementSpeed)
+                const moveCost = Math.ceil(Math.max(0, Vec.l1(cell.pos, robot.pos) - w.DigRange) / w.MovementSpeed)
                 const returnCost = Math.ceil(cell.pos.x / w.MovementSpeed);
                 const radarCost = hasRadar ? this.radarCost(cell.pos, world) : 0;
                 const duplication = this.duplicationCost(cell.pos, otherActions);
@@ -182,9 +211,9 @@ export default class Agent {
                     + 1 * duplication;
 
                 const payoff =
-                    belief.oreProbability()
-                    * Math.exp(-cost)
-                    * Math.min(1, Math.exp(-belief.trapBelief));
+                    Math.exp(-cost) * belief.oreProbability()
+                    - 10 * belief.trapProbability();
+
                 payoffs[y][x] = payoff;
             }
         }
@@ -231,7 +260,9 @@ class CellBelief {
     oreBelief = 0;
     oreKnown = 0;
     hadOre = false;
+
     trapBelief = 0;
+    trapKnown = 0;
 
     constructor(pos: Vec) {
         this.pos = pos;
@@ -281,6 +312,10 @@ class CellBelief {
         }
     }
 
+    observedTrap() {
+        this.trapKnown = 1;
+    }
+
     oreProbability() {
         if (this.pos.x === 0) {
             return 0; // Never any ore in the headquarter row
@@ -290,6 +325,19 @@ class CellBelief {
             return 1;
         } else {
             return 1 / (1 + Math.exp(-this.oreBelief));
+        }
+
+    }
+
+    trapProbability() {
+        if (this.pos.x === 0) {
+            return 0; // Never any traps in the headquarter row
+        } else if (this.trapKnown > 0) {
+            return 1;
+        } else if (this.trapKnown < 0) {
+            return -1;
+        } else {
+            return 1 - Math.exp(-this.trapBelief); // zero trap belief = 0 probability of a trap 
         }
     }
 }
