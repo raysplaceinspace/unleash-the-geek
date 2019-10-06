@@ -25,6 +25,15 @@ function distanceToEdge(p: Vec, world: w.World) {
     );
 }
 
+function some<K, V>(collection: Iterable<V>, predicate: (value: V) => boolean) {
+    for (const value of collection) {
+        if (predicate(value)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 export default class Agent {
     private beliefs: CellBelief[][];
     private enemyBeliefs = new Map<number, EnemyRobotBelief>();
@@ -51,13 +60,13 @@ export default class Agent {
 
         const trapMap = this.generateTrapMap(world);
 
-        const actions = new Array<w.Action>();
+        const actions = new Map<number, w.Action>();
         const robots = world.entities.filter(r => r.type === w.ItemType.RobotTeam0);
         for (const robot of robots) {
-            actions.push(this.chooseForRobot(world, robot, trapMap, actions));
+            actions.set(robot.id, this.chooseForRobot(world, robot, trapMap, actions.values()));
         }
 
-        return actions;
+        return robots.map(robot => actions.get(robot.id));
     }
 
     private updateBeliefsFromDigs(previous: w.World, world: w.World) {
@@ -182,7 +191,7 @@ export default class Agent {
         return result;
     }
 
-    private chooseForRobot(world: w.World, robot: w.Entity, trapMap: number[][], otherActions: w.Action[]): w.Action {
+    private chooseForRobot(world: w.World, robot: w.Entity, trapMap: number[][], otherActions: Iterable<w.Action>): w.Action {
         if (robot.dead) {
             return {
                 entityId: robot.id,
@@ -195,7 +204,7 @@ export default class Agent {
                 item: w.ItemType.Radar,
             };
         } else if (robot.carrying === w.ItemType.None && world.teams[0].radarCooldown === 0 && robot.pos.x === 0
-            && !otherActions.some(a => a.type === "request" && a.item === w.ItemType.Radar)) {
+            && !some(otherActions, a => a.type === "request" && a.item === w.ItemType.Radar)) {
 
             return {
                 entityId: robot.id,
@@ -203,7 +212,7 @@ export default class Agent {
                 item: w.ItemType.Radar,
             };
         } else if (robot.carrying === w.ItemType.None && world.teams[0].trapCooldown === 0 && robot.pos.x === 0
-            && !otherActions.some(a => a.type === "request" && a.item === w.ItemType.Trap)) {
+            && !some(otherActions, a => a.type === "request" && a.item === w.ItemType.Trap)) {
 
             return {
                 entityId: robot.id,
@@ -215,7 +224,7 @@ export default class Agent {
         }
     }
 
-    private closestUndug(robot: w.Entity, world: w.World, trapMap: number[][], otherActions: w.Action[]): w.Action {
+    private closestUndug(robot: w.Entity, world: w.World, trapMap: number[][], otherActions: Iterable<w.Action>): w.Action {
         const hasRadar = robot.carrying === w.ItemType.Radar;
         const hasTrap = robot.carrying === w.ItemType.Trap;
 
@@ -227,7 +236,7 @@ export default class Agent {
             payoffs[y] = new Array<number>();
             for (let x = 0; x < world.width; ++x) {
                 const cell = world.map[y][x];
-                const belief = this.beliefs[y][x];
+                const cellBelief = this.beliefs[y][x];
 
                 const destination = this.moveNeighbour(robot.pos, cell.pos, world);
 
@@ -248,8 +257,8 @@ export default class Agent {
                     + 1 * explosionCost;
 
                 const payoff =
-                    belief.oreProbability() / (1 + cost)
-                    - 1 * belief.trapProbability();
+                    cellBelief.oreProbability() / (1 + cost)
+                    - 1 * cellBelief.trapProbability()
 
                 payoffs[y][x] = payoff;
             }
@@ -301,11 +310,7 @@ export default class Agent {
             if (enemy.type === w.ItemType.RobotTeam1) {
                 for (const trap of neighbours(enemy.pos, world)) {
                     const trapProbability = this.beliefs[trap.y][trap.x].trapProbability();
-                    if (trapProbability > 0) {
-                        for (const explosion of neighbours(trap, world)) {
-                            trapMap[explosion.y][explosion.x] += trapProbability;
-                        }
-                    }
+                    this.explodeTrap(trap, trapProbability, world, trapMap);
                 }
             }
         });
@@ -313,9 +318,27 @@ export default class Agent {
         return trapMap;
     }
 
-    private duplicationCost(target: Vec, otherActions: w.Action[]): number {
+    private explodeTrap(trap: Vec, trapProbability: number, world: w.World, trapMap: Array<number[]>) {
+        if (trapProbability <= 0) {
+            return;
+        }
+
+        const initialTrapProbability = trapMap[trap.y][trap.x];
+        if (trapProbability > initialTrapProbability) {
+            trapMap[trap.y][trap.x] = trapProbability;
+
+            for (const explosion of neighbours(trap, world)) {
+                trapMap[explosion.y][explosion.x] = Math.max(trapMap[explosion.y][explosion.x], trapProbability);
+
+                const nextTrapProbability = this.beliefs[explosion.y][explosion.x].trapProbability();
+                this.explodeTrap(explosion, nextTrapProbability, world, trapMap);
+            }
+        }
+    }
+
+    private duplicationCost(target: Vec, otherActions: Iterable<w.Action>): number {
         const DuplicateCost = 10;
-        const duplicate = otherActions.some(a => a.type === "dig" && a.target.x === target.x && a.target.y === target.y);
+        const duplicate = some(otherActions, a => a.type === "dig" && a.target.x === target.x && a.target.y === target.y);
         return duplicate ? DuplicateCost : 0;
     }
 
