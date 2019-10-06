@@ -48,10 +48,12 @@ export default class Agent {
         this.updateBeliefsFromMap(world);
         this.updateBeliefsFromEntities(world);
 
+        const trapMap = this.generateTrapMap(world);
+
         const actions = new Array<w.Action>();
         const robots = world.entities.filter(r => r.type === w.ItemType.RobotTeam0);
         for (const robot of robots) {
-            actions.push(this.chooseForRobot(world, robot, actions));
+            actions.push(this.chooseForRobot(world, robot, trapMap, actions));
         }
 
         return actions;
@@ -148,7 +150,7 @@ export default class Agent {
         return result;
     }
 
-    private chooseForRobot(world: w.World, robot: w.Entity, otherActions: w.Action[]): w.Action {
+    private chooseForRobot(world: w.World, robot: w.Entity, trapMap: number[][], otherActions: w.Action[]): w.Action {
         if (robot.dead) {
             return {
                 entityId: robot.id,
@@ -177,18 +179,16 @@ export default class Agent {
                 item: w.ItemType.Trap,
             };
         } else {
-            return this.closestUndug(robot, world, otherActions);
+            return this.closestUndug(robot, world, trapMap, otherActions);
         }
     }
 
-    private closestUndug(robot: w.Entity, world: w.World, otherActions: w.Action[]): w.Action {
+    private closestUndug(robot: w.Entity, world: w.World, trapMap: number[][], otherActions: w.Action[]): w.Action {
         const hasRadar = robot.carrying === w.ItemType.Radar;
         const hasTrap = robot.carrying === w.ItemType.Trap;
 
         let target = robot.pos;
         let best = 0;
-        
-        const trapMap = this.generateTrapMap(world);
 
         const payoffs = new Array<number[]>();
         for (let y = 0; y < world.height; ++y) {
@@ -205,7 +205,7 @@ export default class Agent {
                 const explosionCost = trapMap[destination.y][destination.x];
                 const duplication = this.duplicationCost(cell.pos, otherActions);
                 const cost =
-                    0.1 * moveCost
+                    0.2 * moveCost
                     + 0.1 * returnCost
                     + 1 * radarCost
                     + 1 * duplication
