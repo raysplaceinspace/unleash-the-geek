@@ -239,7 +239,7 @@ export default class Agent {
                 const explosionCost = trapMap[destination.y][destination.x];
                 const duplication = this.duplicationCost(cell.pos, otherActions);
                 const cost =
-                    1 * digCost
+                    0.1 * digCost
                     1 * moveCost
                     + 0.1 * returnCost
                     + 3 * radarCost
@@ -248,7 +248,7 @@ export default class Agent {
 
                 const payoff =
                     belief.oreProbability() / (1 + cost)
-                    - 10 * belief.trapProbability();
+                    - 1 * belief.trapProbability();
 
                 payoffs[y][x] = payoff;
             }
