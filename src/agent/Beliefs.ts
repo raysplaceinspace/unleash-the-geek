@@ -1,3 +1,4 @@
+import * as traverse from '../util/traverse';
 import * as w from '../model';
 import Vec from '../util/vector';
 import CellBelief from './CellBelief';
@@ -56,7 +57,7 @@ export default class Beliefs {
 
                     const cellBelief = this.beliefs[target.y][target.x];
                     cellBelief.observedSelfDig(success);
-                    for (const p of w.neighbours(target, world, 2)) {
+                    for (const p of traverse.neighbours(target, world, 2)) {
                         this.beliefs[p.y][p.x].observedNeighbour(success, cellBelief);
                     }
                 }
@@ -88,7 +89,7 @@ export default class Beliefs {
 
                     } else {
                         let potentialDig = false;
-                        for (const n of w.neighbours(previousRobot.pos, world)) {
+                        for (const n of traverse.neighbours(previousRobot.pos, world)) {
                             if (world.map[n.y][n.x].hole) {
                                 potentialDig = true;
                                 this.beliefs[n.y][n.x].observedStillEnemy(carryingProbability);

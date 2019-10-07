@@ -29,6 +29,10 @@ export default class Vec {
         return new Vec(radius * Math.cos(angle), radius * Math.sin(angle));
     }
 
+    equals(vec: Vec) {
+        return this.x === vec.x && this.y === vec.y;
+    }
+
     add(vec: Vec) {
         this.x += vec.x;
         this.y += vec.y;
@@ -76,5 +80,9 @@ export default class Vec {
 
     string() {
         return `${this.x},${this.y}`;
+    }
+
+    hash() {
+        return (this.x << 16) | this.y;
     }
 }
