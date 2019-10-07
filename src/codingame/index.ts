@@ -90,24 +90,28 @@ function formatItemType(itemType: w.ItemType) {
 }
 
 function main() {
-    // initialisation
-    let world = readInitial();
-    const agent = new Agent(world.width, world.height);
+    try {
+        // initialisation
+        let world = readInitial();
+        const agent = new Agent(world.width, world.height);
 
-    // game loop
-    while (true) {
-        const next = w.clone(world);
-        readNext(next);
+        // game loop
+        while (true) {
+            const next = w.clone(world);
+            readNext(next);
 
-        const actions = agent.choose(world, next);
-        next.actions = actions;
+            const actions = agent.choose(world, next);
+            next.actions = actions;
 
-        for (let i = 0; i < actions.length; i++) {
-            console.log(formatAction(actions[i]));
+            for (let i = 0; i < actions.length; i++) {
+                console.log(formatAction(actions[i]));
+            }
+
+            world = next;
+            world.tick++;
         }
-
-        world = next;
-        world.tick++;
+    } catch(exception) {
+        console.error(exception);
     }
 }
 

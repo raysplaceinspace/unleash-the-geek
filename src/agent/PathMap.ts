@@ -7,6 +7,8 @@ import ExplosionMap from './ExplosionMap';
 const ExplosionCost = 100;
 
 export default class PathMap {
+    public expansions = 0;
+
     constructor(public from: Vec, public bounds: traverse.Dimensions, private pathMap: number[][]) {
     }
 
@@ -36,33 +38,45 @@ export default class PathMap {
 
     public static generate(from: Vec, bounds: traverse.Dimensions, explosionMap: ExplosionMap): PathMap {
         const pathMap = collections.create2D<number>(bounds.width, bounds.height, Infinity);
+        const result = new PathMap(from, bounds, pathMap);
 
-        PathMap.expand(from, bounds, explosionMap, pathMap, 0);
-
-        return new PathMap(from, bounds, pathMap);
+        const neighbours = [new Neighbour(from, 0)];
+        while (neighbours.length > 0) {
+            const neighbour = neighbours.shift();
+            result.expand(neighbour, explosionMap, neighbours);
+        }
+        return result;
     }
 
-    private static expand(pos: Vec, bounds: traverse.Dimensions, explosionMap: ExplosionMap, pathMap: number[][], steps: number) {
-        const current = pathMap[pos.y][pos.x];
-        if (steps >= current) {
+    private expand(neighbour: Neighbour, explosionMap: ExplosionMap, neighbours: Neighbour[]) {
+        const pos = neighbour.pos;
+        const cost = neighbour.cost;
+
+        const previous = this.pathMap[pos.y][pos.x];
+        if (cost >= previous) {
             // Cannot beat existing path
             return;
         }
 
-        let cost = steps;
-        if (explosionMap.explodeProbability(pos.x, pos.y) > 0) {
-            cost += ExplosionCost;
-        }
+        this.pathMap[pos.y][pos.x] = cost;
+        ++this.expansions;
 
-        if (cost >= current) {
-            // Cannot beat existing path
-            return;
-        }
+        for (const n of traverse.neighbours(pos, this.bounds, w.MovementSpeed)) {
+            if (n.equals(pos)) {
+                continue;
+            }
 
-        pathMap[pos.y][pos.x] = cost;
+            let next = cost + 1;
+            if (explosionMap.explodeProbability(pos.x, pos.y) > 0) {
+                next += ExplosionCost;
+            }
 
-        for (const n of traverse.neighbours(pos, bounds, w.MovementSpeed)) {
-            PathMap.expand(n, bounds, explosionMap, pathMap, steps + 1);
+            neighbours.push(new Neighbour(n, next));
         }
+    }
+}
+
+class Neighbour {
+    constructor(public pos: Vec, public cost: number) {
     }
 }

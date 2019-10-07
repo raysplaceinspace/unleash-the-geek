@@ -38,30 +38,30 @@ export default class Actor {
                 entityId: robot.id,
                 type: "wait",
             }));
-        }
-
-        const pathMap = PathMap.generate(robot.pos, this.world, this.explosionMap);
-        if (robot.carrying === w.ItemType.Ore && robot.pos.x > 0) {
-            actions.push(ReturnEvaluator.generateBestReturn(robot, pathMap));
         } else {
-            if (robot.carrying === w.ItemType.None && robot.pos.x === 0) {
-                if (this.world.teams[0].radarCooldown === 0) {
-                    actions.push(new ActionValue(1, {
-                        entityId: robot.id,
-                        type: "request",
-                        item: w.ItemType.Radar,
-                    }));
+            const pathMap = PathMap.generate(robot.pos, this.world, this.explosionMap);
+            if (robot.carrying === w.ItemType.Ore && robot.pos.x > 0) {
+                actions.push(ReturnEvaluator.generateBestReturn(robot, pathMap));
+            } else {
+                if (robot.carrying === w.ItemType.None && robot.pos.x === 0) {
+                    if (this.world.teams[0].radarCooldown === 0) {
+                        actions.push(new ActionValue(1, {
+                            entityId: robot.id,
+                            type: "request",
+                            item: w.ItemType.Radar,
+                        }));
+                    }
+                    if (this.world.teams[0].trapCooldown === 0) {
+                        actions.push(new ActionValue(1, {
+                            entityId: robot.id,
+                            type: "request",
+                            item: w.ItemType.Trap,
+                        }));
+                    }
                 }
-                if (this.world.teams[0].trapCooldown === 0) {
-                    actions.push(new ActionValue(1, {
-                        entityId: robot.id,
-                        type: "request",
-                        item: w.ItemType.Trap,
-                    }));
-                }
-            }
 
-            actions.push(...DigEvaluator.generateDigActions(robot, this.world, this.beliefs, pathMap));
+                actions.push(...DigEvaluator.generateDigActions(robot, this.world, this.beliefs, pathMap));
+            }
         }
         return actions;
     }
