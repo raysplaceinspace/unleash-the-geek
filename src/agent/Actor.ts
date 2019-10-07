@@ -21,16 +21,12 @@ export default class Actor {
 
         const potentialActions = this.evaluateChoices(robots);
 
-        let deduplicationAttempts = 0;
         for (let attempt = 0; attempt < this.world.numRobots; ++attempt) {
             const changed = this.subsumeActions(robots, potentialActions);
             if (!changed) {
                 break;
             }
-
-            ++deduplicationAttempts;
         }
-        console.error(`Deduplications: ${deduplicationAttempts}`);
 
         const result = new Map<number, w.Action>();
         for (const robot of robots) {
