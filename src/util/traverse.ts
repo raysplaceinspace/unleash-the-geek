@@ -7,7 +7,7 @@ export interface Dimensions {
 
 export function* all(dimensions: Dimensions): Iterable<Vec> {
     for (let y = 0; y < dimensions.height; ++y) {
-        for (let x = 0; x <= dimensions.width; ++x) {
+        for (let x = 0; x < dimensions.width; ++x) {
             yield new Vec(x, y);
         }
     }

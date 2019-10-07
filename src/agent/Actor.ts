@@ -58,10 +58,10 @@ export default class Actor {
         const result = new Map<number, w.Action>();
         for (const robot of robots) {
             const potentials = potentialActions.get(robot.id);
-            const actionValue = potentials[0] || this.generateNoop(robot.id);
+            const intent = potentials[0] || this.generateNoop(robot.id);
 
             const pathMap = this.getOrCreatePathMap(robot.id);
-            result.set(robot.id, actionValue.toAction(robot, pathMap));
+            result.set(robot.id, intent.toAction(robot, pathMap));
         }
 
         return result;
@@ -122,8 +122,8 @@ export default class Actor {
     private evaluateChoices(robots: w.Entity[]): Map<number, Intent[]> {
         const result = new Map<number, Intent[]>();
         for (const robot of robots) {
-            const actionValues = this.evaluateRobotChoices(robot);
-            result.set(robot.id, actionValues);
+            const intents = this.evaluateRobotChoices(robot);
+            result.set(robot.id, intents);
         }
         return result;
     }
