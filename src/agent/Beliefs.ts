@@ -31,6 +31,11 @@ export default class Beliefs {
         return this.beliefs[y][x].trapProbability();
     }
 
+    carryingProbability(robotId: number) {
+        const belief = this.enemyBeliefs.get(robotId);
+        return belief ? belief.carryingProbability() : 0;
+    }
+
     update(previous: w.World, world: w.World) {
         this.updateBeliefsFromDigs(previous, world);
         this.updateBeliefsFromMap(world);

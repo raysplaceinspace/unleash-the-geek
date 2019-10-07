@@ -17,6 +17,8 @@ export default class Actor {
     }
 
     choose(): Map<number, w.Action> {
+        console.error(this.explosionMap.format());
+
         const robots = this.world.entities.filter(r => r.type === w.ItemType.RobotTeam0);
 
         const potentialActions = this.evaluateChoices(robots);

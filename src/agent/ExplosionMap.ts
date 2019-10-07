@@ -17,7 +17,16 @@ export default class ExplosionMap {
 
         world.entities.forEach(enemy => {
             if (enemy.type === w.ItemType.RobotTeam1) {
-                for (const trap of traverse.neighbours(enemy.pos, world)) {
+                const carryingProbability = beliefs.carryingProbability(enemy.id);
+                if (carryingProbability > 0) {
+                    // The enemy can place the trap here and detonate it before we can escape
+                    for (const trap of traverse.neighbours(enemy.pos, world)) {
+                        ExplosionMap.explodeTrap(trap, carryingProbability, world, beliefs, explosionMap);
+                    }
+                }
+
+                // The enemy can reach this trap and explode it before we can escape
+                for (const trap of traverse.neighbours(enemy.pos, world, w.MovementSpeed)) {
                     const trapProbability = beliefs.trapProbability(trap.x, trap.y);
                     ExplosionMap.explodeTrap(trap, trapProbability, world, beliefs, explosionMap);
                 }
@@ -43,5 +52,18 @@ export default class ExplosionMap {
                 ExplosionMap.explodeTrap(explosion, nextTrapProbability, world, beliefs, explosionMap);
             }
         }
+    }
+
+    format(): string {
+        let result = '';
+        for (let y = 0; y < this.trapMap.length; ++y) {
+            const row = this.trapMap[y];
+            let line = '';
+            for (let x = 0; x < row.length; ++x) {
+                line += row[x] > 0 ? 'x' : '.';
+            }
+            result += line + "\n";
+        }
+        return result;
     }
 }
