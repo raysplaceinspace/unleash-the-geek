@@ -7,7 +7,8 @@ import ExplosionMap from './ExplosionMap';
 const ExplosionCost = 100;
 
 export default class PathMap {
-    public expansions = 0;
+    public assignments = 0;
+    public expansions = new Set<number>();
 
     constructor(public from: Vec, public bounds: traverse.Dimensions, private pathMap: number[][]) {
     }
@@ -40,7 +41,10 @@ export default class PathMap {
         const pathMap = collections.create2D<number>(bounds.width, bounds.height, Infinity);
         const result = new PathMap(from, bounds, pathMap);
 
-        const neighbours = [new Neighbour(from, 0)];
+        const initial = new Neighbour(from, 0);
+        result.assign(initial);
+
+        const neighbours = [initial];
         while (neighbours.length > 0) {
             const neighbour = neighbours.shift();
             result.expand(neighbour, explosionMap, neighbours);
@@ -48,18 +52,27 @@ export default class PathMap {
         return result;
     }
 
-    private expand(neighbour: Neighbour, explosionMap: ExplosionMap, neighbours: Neighbour[]) {
+    private assign(neighbour: Neighbour) {
         const pos = neighbour.pos;
         const cost = neighbour.cost;
 
         const previous = this.pathMap[pos.y][pos.x];
-        if (cost >= previous) {
-            // Cannot beat existing path
-            return;
+        if (cost < previous) {
+            this.pathMap[pos.y][pos.x] = cost;
+            ++this.assignments;
         }
+    }
 
-        this.pathMap[pos.y][pos.x] = cost;
-        ++this.expansions;
+    private expand(from: Neighbour, explosionMap: ExplosionMap, neighbours: Neighbour[]) {
+        const pos = from.pos;
+        const cost = from.cost;
+
+        if (this.expansions.has(pos.hash())) {
+            // Already expanded
+            return;
+        } else {
+            this.expansions.add(pos.hash());
+        }
 
         for (const n of traverse.neighbours(pos, this.bounds, w.MovementSpeed)) {
             if (n.equals(pos)) {
@@ -72,8 +85,23 @@ export default class PathMap {
             }
 
             if (next < this.pathMap[n.y][n.x]) {
-                neighbours.push(new Neighbour(n, next));
+                const neighbour = new Neighbour(n, next);
+                this.assign(neighbour);
+                this.insertNeighbour(neighbour, neighbours);
             }
+        }
+    }
+
+    private insertNeighbour(toInsert: Neighbour, neighbours: Neighbour[]) {
+        let i = 0;
+        while (i < neighbours.length && neighbours[i].cost < toInsert.cost) {
+            ++i;
+        }
+
+        if (i < neighbours.length) {
+            neighbours.splice(i, 0, toInsert);
+        } else {
+            neighbours.push(toInsert);
         }
     }
 }

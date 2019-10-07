@@ -14,10 +14,23 @@ export function testAgent() {
         carrying: w.ItemType.None,
     });
     next.entities.push({
-        id: 0,
+        id: 1,
+        type: w.ItemType.RobotTeam0,
+        pos: new Vec(0, 5),
+        carrying: w.ItemType.None,
+    });
+    next.entities.push({
+        id: 2,
+        type: w.ItemType.RobotTeam1,
+        pos: new Vec(0, 3),
+        carrying: w.ItemType.None,
+    });
+    next.entities.push({
+        id: 3,
         type: w.ItemType.RobotTeam1,
         pos: new Vec(0, 5),
         carrying: w.ItemType.None,
     });
+    world.numRobots = 2;
     const actions = agent.choose(world, next);
 }

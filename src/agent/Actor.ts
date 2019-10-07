@@ -119,7 +119,7 @@ export default class Actor {
             actions.push(this.generateNoop(robot.id));
         } else {
             const pathMap = PathMap.generate(robot.pos, this.world, this.explosionMap);
-            console.error(`Robot ${robot.id} paths (${pathMap.expansions}): ${Date.now() - start} ms`);
+            console.error(`Robot ${robot.id} paths (${pathMap.expansions.size}): ${Date.now() - start} ms`);
 
             if (robot.carrying === w.ItemType.Ore && robot.pos.x > 0) {
                 actions.push(ReturnEvaluator.generateBestReturn(robot, pathMap));
