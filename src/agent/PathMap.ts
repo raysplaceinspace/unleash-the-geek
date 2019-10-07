@@ -67,11 +67,13 @@ export default class PathMap {
             }
 
             let next = cost + 1;
-            if (explosionMap.explodeProbability(pos.x, pos.y) > 0) {
+            if (explosionMap.explodeProbability(n.x, n.y) > 0) {
                 next += ExplosionCost;
             }
 
-            neighbours.push(new Neighbour(n, next));
+            if (next < this.pathMap[n.y][n.x]) {
+                neighbours.push(new Neighbour(n, next));
+            }
         }
     }
 }
