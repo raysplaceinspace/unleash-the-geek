@@ -1,8 +1,8 @@
 import * as collections from '../util/collections';
 import * as traverse from '../util/traverse';
 import * as w from '../model';
-import ActionValue from './ActionValue';
 import Beliefs from './Beliefs';
+import Intent from './Intent';
 import PayoffMap from './PayoffMap';
 import PathMap from './PathMap';
 import Vec from '../util/vector';
@@ -17,50 +17,60 @@ function maximumValue(a: DigIntent, b: DigIntent) {
     }
 }
 
-export function generateDigActions(robot: w.Entity, world: w.World, beliefs: Beliefs, pathMap: PathMap): ActionValue[] {
+export function generateDigActions(robot: w.Entity, world: w.World, beliefs: Beliefs, pathMap: PathMap): DigIntent[] {
     const payoffs = PayoffMap.generate(world, beliefs, robot);
 
     const cellValues = [...collections.map(
         traverse.all(world),
-        dig => DigIntent.evaluatePos(dig, payoffs, pathMap))];
+        dig => DigIntent.evaluatePos(robot, dig, payoffs, pathMap))];
     cellValues.sort(maximumValue);
 
     const actionValues =
         cellValues
         .slice(0, world.numRobots)
-        .map(cellValue => cellValue.toActionValue(robot, pathMap));
     return actionValues;
 }
 
-class DigIntent {
-    constructor(public dig: Vec, public destination: Vec, public value: number) {
+export class DigIntent extends Intent {
+    type: "dig";
+
+    private constructor(robotId: number, public target: Vec, public destination: Vec, value: number) {
+        super(robotId, value);
     }
 
-    public static evaluatePos(dig: Vec, payoffs: PayoffMap, pathMap: PathMap): DigIntent {
+    public static evaluatePos(robot: w.Entity, dig: Vec, payoffs: PayoffMap, pathMap: PathMap): DigIntent {
         const payoff = payoffs.payoff(dig.x, dig.y);
         const destination = collections.minBy(traverse.neighbours(dig, pathMap.bounds), n => pathMap.cost(n));
         const moveCost = pathMap.cost(destination);
 
         const value = payoff / (1 + moveCost);
-        return new DigIntent(dig, destination, value);
+        return new DigIntent(robot.id, dig, destination, value);
     }
 
-    toActionValue(robot: w.Entity, pathMap: PathMap): ActionValue {
+    duplicates(other: Intent): boolean {
+        if (other instanceof DigIntent) {
+            return this.target.equals(other.target);
+        } else {
+            return super.duplicates(other);
+        }
+    }
+
+    toAction(robot: w.Entity, pathMap: PathMap): w.Action {
         if (robot.pos.equals(this.destination)) {
-            return new ActionValue(this.value, {
+            return {
                 entityId: robot.id,
                 type: "dig",
-                target: this.dig,
-                tag: this.dig.string(),
-            });
+                target: this.target,
+                tag: this.target.string(),
+            };
         } else {
             const path = pathMap.pathTo(this.destination);
-            return new ActionValue(this.value, {
+            return {
                 entityId: robot.id,
                 type: "move",
                 target: path[0],
-                tag: this.dig.string(),
-            });
+                tag: this.target.string(),
+            };
         }
     }
 }
