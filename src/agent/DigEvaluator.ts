@@ -51,6 +51,7 @@ class DigIntent {
                 entityId: robot.id,
                 type: "dig",
                 target: this.dig,
+                tag: this.dig.string(),
             });
         } else {
             const path = pathMap.pathTo(this.destination);
@@ -58,6 +59,7 @@ class DigIntent {
                 entityId: robot.id,
                 type: "move",
                 target: path[0],
+                tag: this.dig.string(),
             });
         }
     }
