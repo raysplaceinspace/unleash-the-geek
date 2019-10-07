@@ -22,9 +22,8 @@ export class ReturnIntent extends Intent {
     }
 
     public static evaluate(robot: w.Entity, y: number, pathMap: PathMap): ReturnIntent {
-        const centerY = (pathMap.bounds.height - 1) / 2;
-        const distanceToCenter = Math.abs(y - centerY);
-        const payoff = 1 - distanceToCenter / centerY;
+        const distanceToCenter = Math.abs(y - robot.pos.y);
+        const payoff = 1 - distanceToCenter / pathMap.bounds.height;
 
         const target = new Vec(0, y);
         const value = discount(payoff, pathMap.cost(target));
