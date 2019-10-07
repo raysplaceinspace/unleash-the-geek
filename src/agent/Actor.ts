@@ -10,6 +10,8 @@ import PayoffMap from './PayoffMap';
 import * as ReturnEvaluator from './ReturnEvaluator';
 import Vec from '../util/vector';
 
+const TargetRadarCount = 3;
+
 export default class Actor {
     private explosionMap: ExplosionMap;
     private pathMaps = new Map<number, PathMap>();
@@ -148,12 +150,12 @@ export default class Actor {
             if (robot.carrying === w.ItemType.Ore && robot.pos.x > 0) {
                 actions.push(ReturnEvaluator.generateBestReturn(robot, this.beliefs, pathMap));
             } else {
-                if (robot.carrying === w.ItemType.None && robot.pos.x === 0) {
-                    if (this.world.teams[0].radarCooldown === 0) {
-                        actions.push(new RequestIntent(robot.id, w.ItemType.Radar, 1));
+                if (robot.carrying === w.ItemType.None) {
+                    if (this.world.teams[0].radarCooldown === 0 && (robot.pos.x === 0 || this.radarCount() < TargetRadarCount)) {
+                        actions.push(RequestIntent.evaluate(robot, w.ItemType.Radar, pathMap));
                     }
-                    if (this.world.teams[0].trapCooldown === 0) {
-                        actions.push(new RequestIntent(robot.id, w.ItemType.Trap, 1));
+                    if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0) {
+                        actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, pathMap));
                     }
                 }
 
@@ -166,5 +168,15 @@ export default class Actor {
 
     private generateNoop(robotId: number): WaitIntent {
         return new WaitIntent(robotId, 0);
+    }
+
+    private radarCount(): number {
+        let numRadars = 0;
+        for (const entity of this.world.entities) {
+            if (entity.type === w.ItemType.Radar) {
+                ++numRadars;
+            }
+        }
+        return numRadars;
     }
 }
