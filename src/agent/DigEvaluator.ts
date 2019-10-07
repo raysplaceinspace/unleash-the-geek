@@ -19,7 +19,7 @@ function maximumValue(a: DigIntent, b: DigIntent) {
 }
 
 export function generateDigActions(robot: w.Entity, world: w.World, beliefs: Beliefs, pathMap: PathMap): DigIntent[] {
-    const payoffs = PayoffMap.generate(world, beliefs, robot);
+    const payoffs = PayoffMap.generate(world, beliefs, pathMap, robot);
 
     const cellValues = [...collections.map(
         traverse.all(world),

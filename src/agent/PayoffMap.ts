@@ -2,6 +2,7 @@ import * as traverse from '../util/traverse';
 import * as w from '../model';
 import { discount } from './Discount';
 import Beliefs from './Beliefs';
+import PathMap from './PathMap';
 import Vec from '../util/vector';
 
 export default class PayoffMap {
@@ -12,20 +13,20 @@ export default class PayoffMap {
         return this.payoffMap[y][x];
     }
 
-    public static generate(world: w.World, beliefs: Beliefs, robot: w.Entity): PayoffMap {
+    public static generate(world: w.World, beliefs: Beliefs, pathMap: PathMap, robot: w.Entity): PayoffMap {
         const payoffs = new Array<number[]>();
         for (let y = 0; y < world.height; ++y) {
             payoffs[y] = new Array<number>();
             for (let x = 0; x < world.width; ++x) {
                 const cell = world.map[y][x];
-                payoffs[y][x] = PayoffMap.generateCell(cell, world, beliefs, robot);
+                payoffs[y][x] = PayoffMap.generateCell(cell, world, beliefs, pathMap, robot);
             }
         }
 
         return new PayoffMap(payoffs);
     }
 
-    private static generateCell(cell: w.Cell, world: w.World, beliefs: Beliefs, robot: w.Entity): number {
+    private static generateCell(cell: w.Cell, world: w.World, beliefs: Beliefs, pathMap: PathMap, robot: w.Entity): number {
         if (cell.pos.x <= 0) {
             // No payoff when digging headquarters
             return 0;
@@ -46,7 +47,7 @@ export default class PayoffMap {
             + 1 + placementCost
             + 3 * radarCost
 
-        const returnTicks = cell.pos.x / w.MovementSpeed;
+        const returnTicks = pathMap.cost(cell.pos);
         const oreProbability = beliefs.oreProbability(cell.pos.x, cell.pos.y);
 
         const payoff = discount(oreProbability / (1 + cost), returnTicks);
