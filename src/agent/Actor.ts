@@ -17,7 +17,7 @@ export default class Actor {
     }
 
     choose(): Map<number, w.Action> {
-        console.error(this.explosionMap.format());
+        console.error(this.formatTrapMap());
 
         const robots = this.world.entities.filter(r => r.type === w.ItemType.RobotTeam0);
 
@@ -37,6 +37,34 @@ export default class Actor {
             result.set(robot.id, actionValue.action);
         }
         return result;
+    }
+
+    private formatTrapMap() {
+        let result = '';
+        for (let x = 0; x < this.world.width; ++x) {
+            result += `${(x % 10)}`;
+        }
+        result += "\n";
+
+        for (let y = 0; y < this.world.height; ++y) {
+            let line = `${(y % 10)}`;
+            for (let x = 0; x < this.world.width; ++x) {
+                let c = '.';
+
+                const trap = this.beliefs.trapProbability(x, y) > 0;
+                const explosion = this.explosionMap.explodeProbability(x, y) > 0;
+                if (explosion) {
+                    c = trap ? '*' : 'x';
+                } else if (trap) {
+                    c = 't';
+                }
+
+                line += c;
+            }
+            result += line + "\n";
+        }
+        return result;
+
     }
 
     private subsumeActions(robots: w.Entity[], potentialActions: Map<number, ActionValue[]>): boolean {

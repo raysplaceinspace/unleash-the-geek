@@ -5,65 +5,71 @@ import Vec from '../util/vector';
 import Beliefs from './Beliefs';
 
 export default class ExplosionMap {
-    private constructor(private trapMap: number[][]) {
+    numExplosions = 0;
+    private exploded: boolean[][];
+    private explosionMap: number[][];
+
+    private constructor(private bounds: traverse.Dimensions) {
+        this.exploded = collections.create2D<boolean>(bounds.width, bounds.height, false);
+        this.explosionMap = collections.create2D<number>(bounds.width, bounds.height, 0);
     }
 
     public explodeProbability(x: number, y: number): number {
-        return this.trapMap[y][x];
+        return this.explosionMap[y][x];
     }
 
     public static generate(world: w.World, beliefs: Beliefs) {
-        const explosionMap = collections.create2D(world.width, world.height, 0);
+        const result = new ExplosionMap(world);
 
+        console.error(`Explosions 1`);
         world.entities.forEach(enemy => {
             if (enemy.type === w.ItemType.RobotTeam1) {
                 const carryingProbability = beliefs.carryingProbability(enemy.id);
                 if (carryingProbability > 0) {
                     // The enemy can place the trap here and detonate it before we can escape
                     for (const trap of traverse.neighbours(enemy.pos, world)) {
-                        ExplosionMap.explodeTrap(trap, carryingProbability, world, beliefs, explosionMap);
+                        result.explodeTrap(trap, carryingProbability, beliefs);
                     }
                 }
 
                 // The enemy can reach this trap and explode it before we can escape
                 for (const trap of traverse.neighbours(enemy.pos, world, w.MovementSpeed)) {
                     const trapProbability = beliefs.trapProbability(trap.x, trap.y);
-                    ExplosionMap.explodeTrap(trap, trapProbability, world, beliefs, explosionMap);
+                    if (trapProbability > 0) {
+                        result.explodeTrap(trap, trapProbability, beliefs);
+                    }
                 }
             }
         });
+        console.error(`Explosions 2: ${result.numExplosions}`);
 
-        return new ExplosionMap(explosionMap);
+        return result;
     }
 
-    private static explodeTrap(trap: Vec, trapProbability: number, world: w.World, beliefs: Beliefs, explosionMap: Array<number[]>) {
+    private explodeTrap(trap: Vec, trapProbability: number, beliefs: Beliefs) {
         if (trapProbability <= 0) {
             return;
         }
 
-        const initialTrapProbability = explosionMap[trap.y][trap.x];
-        if (trapProbability > initialTrapProbability) {
-            explosionMap[trap.y][trap.x] = trapProbability;
+        if (this.exploded[trap.y][trap.x]) {
+            return;
+        }
+        this.exploded[trap.y][trap.x] = true;
 
-            for (const explosion of traverse.neighbours(trap, world)) {
-                explosionMap[explosion.y][explosion.x] = Math.max(explosionMap[explosion.y][explosion.x], trapProbability);
+        ++this.numExplosions;
 
-                const nextTrapProbability = beliefs.trapProbability(explosion.x, explosion.y);
-                ExplosionMap.explodeTrap(explosion, nextTrapProbability, world, beliefs, explosionMap);
+        for (const explosion of traverse.neighbours(trap, this.bounds)) {
+            const previous = this.explosionMap[explosion.y][explosion.x];
+            if (previous < trapProbability) {
+                this.explosionMap[explosion.y][explosion.x] = trapProbability;
             }
         }
-    }
 
-    format(): string {
-        let result = '';
-        for (let y = 0; y < this.trapMap.length; ++y) {
-            const row = this.trapMap[y];
-            let line = '';
-            for (let x = 0; x < row.length; ++x) {
-                line += row[x] > 0 ? 'x' : '.';
+        for (const explosion of traverse.neighbours(trap, this.bounds)) {
+            const nextTrapProbability = beliefs.trapProbability(explosion.x, explosion.y);
+            if (nextTrapProbability > 0) {
+                this.explodeTrap(explosion, nextTrapProbability, beliefs);
             }
-            result += line + "\n";
         }
-        return result;
     }
 }
