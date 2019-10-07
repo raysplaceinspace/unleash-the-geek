@@ -40,15 +40,20 @@ export default class PathMap {
     public static generate(from: Vec, bounds: traverse.Dimensions, explosionMap: ExplosionMap): PathMap {
         const pathMap = collections.create2D<number>(bounds.width, bounds.height, Infinity);
         const result = new PathMap(from, bounds, pathMap);
+        
+        if (traverse.withinBounds(from, bounds)) {
+            const initial = new Neighbour(from, 0);
+            result.assign(initial);
 
-        const initial = new Neighbour(from, 0);
-        result.assign(initial);
-
-        const neighbours = [initial];
-        while (neighbours.length > 0) {
-            const neighbour = neighbours.shift();
-            result.expand(neighbour, explosionMap, neighbours);
+            const neighbours = [initial];
+            while (neighbours.length > 0) {
+                const neighbour = neighbours.shift();
+                result.expand(neighbour, explosionMap, neighbours);
+            }
+        } else {
+            // Probably a dead robot
         }
+
         return result;
     }
 
