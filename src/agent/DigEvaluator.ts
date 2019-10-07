@@ -2,6 +2,7 @@ import * as collections from '../util/collections';
 import * as traverse from '../util/traverse';
 import * as w from '../model';
 import Beliefs from './Beliefs';
+import { discount } from './Discount';
 import Intent from './Intent';
 import PayoffMap from './PayoffMap';
 import PathMap from './PathMap';
@@ -43,7 +44,7 @@ export class DigIntent extends Intent {
         const destination = collections.minBy(traverse.neighbours(dig, pathMap.bounds), n => pathMap.cost(n));
         const moveCost = pathMap.cost(destination);
 
-        const value = payoff / (1 + moveCost);
+        const value = discount(payoff, moveCost);
         return new DigIntent(robot.id, dig, destination, value);
     }
 

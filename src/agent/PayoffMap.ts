@@ -1,7 +1,8 @@
 import * as traverse from '../util/traverse';
 import * as w from '../model';
-import Vec from '../util/vector';
+import { discount } from './Discount';
 import Beliefs from './Beliefs';
+import Vec from '../util/vector';
 
 export default class PayoffMap {
     private constructor(private payoffMap: number[][]) {
@@ -39,17 +40,16 @@ export default class PayoffMap {
         const hasRadar = robot.carrying === w.ItemType.Radar;
         const hasTrap = robot.carrying === w.ItemType.Trap;
 
-        const returnCost = cell.pos.x / w.MovementSpeed;
         const radarCost = hasRadar ? PayoffMap.radarCost(cell.pos, world) : 0;
         const placementCost = hasTrap ? PayoffMap.placementCost(cell.pos, world) : 0;
         const cost =
-            + 0.25 * returnCost
             + 1 + placementCost
             + 3 * radarCost
 
+        const returnTicks = cell.pos.x / w.MovementSpeed;
         const oreProbability = beliefs.oreProbability(cell.pos.x, cell.pos.y);
 
-        const payoff = oreProbability / (1 + cost);
+        const payoff = discount(oreProbability / (1 + cost), returnTicks);
         return payoff;
     }
 

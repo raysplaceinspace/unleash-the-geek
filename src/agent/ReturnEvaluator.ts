@@ -1,6 +1,7 @@
 import * as collections from '../util/collections';
 import * as traverse from '../util/traverse';
 import * as w from '../model';
+import { discount } from './Discount';
 import Intent from './Intent';
 import PathMap from './PathMap';
 import Vec from '../util/vector';
@@ -26,7 +27,7 @@ export class ReturnIntent extends Intent {
         const payoff = 1 - distanceToCenter / centerY;
 
         const target = new Vec(0, y);
-        const value = payoff / (1 + pathMap.cost(target));
+        const value = discount(payoff, pathMap.cost(target));
         return new ReturnIntent(robot.id, target, value);
     }
 
