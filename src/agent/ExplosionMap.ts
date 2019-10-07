@@ -21,7 +21,6 @@ export default class ExplosionMap {
     public static generate(world: w.World, beliefs: Beliefs) {
         const result = new ExplosionMap(world);
 
-        console.error(`Explosions 1`);
         world.entities.forEach(enemy => {
             if (enemy.type === w.ItemType.RobotTeam1) {
                 const carryingProbability = beliefs.carryingProbability(enemy.id);
@@ -41,7 +40,6 @@ export default class ExplosionMap {
                 }
             }
         });
-        console.error(`Explosions 2: ${result.numExplosions}`);
 
         return result;
     }

@@ -14,9 +14,7 @@ export default class Actor {
     }
 
     public static create(world: w.World, beliefs: Beliefs) {
-        const start = Date.now();
         const explosionMap = ExplosionMap.generate(world, beliefs);
-        console.error(`Explosion map: ${Date.now() - start} ms`);
         return new Actor(world, beliefs, explosionMap);
     }
 
@@ -36,15 +34,12 @@ export default class Actor {
 
             ++numDeduplications;
         }
-        console.error(`${numDeduplications} deduplications`);
 
         const result = new Map<number, w.Action>();
         for (const robot of robots) {
             const potentials = potentialActions.get(robot.id);
             const actionValue = potentials[0] || this.generateNoop(robot.id);
             result.set(robot.id, actionValue.action);
-
-            console.error(`${robot.id}: ${actionValue.value}`);
         }
 
         return result;
@@ -112,15 +107,11 @@ export default class Actor {
     // Return actions, sorted best to worst
     private evaluateRobotChoices(robot: w.Entity): ActionValue[] {
         const start = Date.now();
-        console.error(`Robot ${robot.id}`);
-
         const actions = new Array<ActionValue>();
         if (robot.dead) {
             actions.push(this.generateNoop(robot.id));
         } else {
             const pathMap = PathMap.generate(robot.pos, this.world, this.explosionMap);
-            console.error(`Robot ${robot.id} paths (${pathMap.expansions.size}): ${Date.now() - start} ms`);
-
             if (robot.carrying === w.ItemType.Ore && robot.pos.x > 0) {
                 actions.push(ReturnEvaluator.generateBestReturn(robot, pathMap));
             } else {
@@ -144,8 +135,6 @@ export default class Actor {
                 actions.push(...DigEvaluator.generateDigActions(robot, this.world, this.beliefs, pathMap));
             }
         }
-
-        console.error(`Robot ${robot.id} complete: ${Date.now() - start} ms`);
         return actions;
     }
 
