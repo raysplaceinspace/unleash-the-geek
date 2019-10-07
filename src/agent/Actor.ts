@@ -6,12 +6,14 @@ import * as DigEvaluator from './DigEvaluator';
 import ExplosionMap from './ExplosionMap';
 import { Intent, RequestIntent, WaitIntent } from './Intent';
 import PathMap from './PathMap';
+import PayoffMap from './PayoffMap';
 import * as ReturnEvaluator from './ReturnEvaluator';
 import Vec from '../util/vector';
 
 export default class Actor {
     private explosionMap: ExplosionMap;
     private pathMaps = new Map<number, PathMap>();
+    private payoffMap: PayoffMap;
 
     private constructor(private world: w.World, private beliefs: Beliefs) {
     }
@@ -36,6 +38,13 @@ export default class Actor {
             this.pathMaps.set(robotId, pathMap);
         }
         return pathMap;
+    }
+
+    private getOrCreatePayoffMap(): PayoffMap {
+        if (!this.payoffMap) {
+            this.payoffMap = PayoffMap.generate(this.world, this.beliefs);
+        }
+        return this.payoffMap;
     }
 
     choose(): Map<number, w.Action> {
@@ -137,7 +146,7 @@ export default class Actor {
         } else {
             const pathMap = this.getOrCreatePathMap(robot.id);
             if (robot.carrying === w.ItemType.Ore && robot.pos.x > 0) {
-                actions.push(ReturnEvaluator.generateBestReturn(robot, pathMap));
+                actions.push(ReturnEvaluator.generateBestReturn(robot, this.beliefs, pathMap));
             } else {
                 if (robot.carrying === w.ItemType.None && robot.pos.x === 0) {
                     if (this.world.teams[0].radarCooldown === 0) {
@@ -148,7 +157,8 @@ export default class Actor {
                     }
                 }
 
-                actions.push(...DigEvaluator.generateDigActions(robot, this.world, this.beliefs, pathMap));
+                const payoffMap = this.getOrCreatePayoffMap();
+                actions.push(...DigEvaluator.generateDigActions(robot, this.world, payoffMap, pathMap));
             }
         }
         return actions;

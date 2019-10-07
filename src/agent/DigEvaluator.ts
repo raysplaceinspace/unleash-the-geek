@@ -18,12 +18,10 @@ function maximumValue(a: DigIntent, b: DigIntent) {
     }
 }
 
-export function generateDigActions(robot: w.Entity, world: w.World, beliefs: Beliefs, pathMap: PathMap): DigIntent[] {
-    const payoffs = PayoffMap.generate(world, beliefs, pathMap, robot);
-
+export function generateDigActions(robot: w.Entity, world: w.World, payoffMap: PayoffMap, pathMap: PathMap): DigIntent[] {
     const cellValues = [...collections.map(
         traverse.all(world),
-        dig => DigIntent.evaluatePos(robot, dig, payoffs, pathMap))];
+        dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, pathMap))];
     cellValues.sort(maximumValue);
 
     const actionValues =
@@ -39,12 +37,22 @@ export class DigIntent extends Intent {
         super(robotId, value);
     }
 
-    public static evaluatePos(robot: w.Entity, dig: Vec, payoffs: PayoffMap, pathMap: PathMap): DigIntent {
+    public static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap): DigIntent {
+        const hasRadar = robot.carrying === w.ItemType.Radar;
+        const hasTrap = robot.carrying === w.ItemType.Trap;
+
+        const radarCost = hasRadar ? DigIntent.radarCost(dig, world) : 0;
+        const placementCost = hasTrap ? DigIntent.placementCost(dig, world) : 0;
+
+        const divisor =
+            + 1 + placementCost
+            + 3 * radarCost
+
         const payoff = payoffs.payoff(dig.x, dig.y);
         const destination = collections.minBy(traverse.neighbours(dig, pathMap.bounds), n => pathMap.cost(n));
         const moveCost = pathMap.cost(destination);
 
-        const value = discount(payoff, moveCost);
+        const value = discount(payoff / (1 + divisor), moveCost);
         return new DigIntent(robot.id, dig, destination, value);
     }
 
@@ -73,5 +81,36 @@ export class DigIntent extends Intent {
                 tag: this.target.string(),
             };
         }
+    }
+
+    private static placementCost(target: Vec, world: w.World): number {
+        const PlacementRange = 5;
+        const outside = PlacementRange + 1;
+        let closest = outside;
+        world.entities.forEach(enemy => {
+            if (enemy && enemy.type === w.ItemType.RobotTeam1) {
+                const distance = Vec.l1(enemy.pos, target);
+                if (distance < closest) {
+                    closest = distance;
+                }
+            }
+        });
+
+        return (outside - closest) / outside;
+    }
+
+    private static radarCost(target: Vec, world: w.World): number {
+        const outside = 2 * w.RadarRange + 1; // 2x because two radars have overlapping range
+        let closest = Math.min(outside, 2 * traverse.distanceToEdge(target, world)); // edge doesn't have a radar attached, so double it to match scale
+        world.entities.forEach(radar => {
+            if (radar && radar.type === w.ItemType.Radar) {
+                const distance = Vec.l1(radar.pos, target);
+                if (distance < closest) {
+                    closest = distance;
+                }
+            }
+        });
+
+        return (outside - closest) / outside;
     }
 }
