@@ -1,5 +1,5 @@
 import * as angles from '../util/angles';
-import * as w from '../world';
+import * as w from '../model';
 import Agent from '../agent';
 import Vec from '../util/vector';
 
