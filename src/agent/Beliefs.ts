@@ -37,9 +37,13 @@ export default class Beliefs {
     }
 
     update(previous: w.World, world: w.World) {
+        const start = Date.now();
+
         this.updateBeliefsFromDigs(previous, world);
         this.updateBeliefsFromMap(world);
         this.updateBeliefsFromEntities(previous, world);
+
+        console.error(`Beliefs updated in ${Date.now() - start} ms`);
     }
 
     private updateBeliefsFromDigs(previous: w.World, world: w.World) {

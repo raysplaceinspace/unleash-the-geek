@@ -13,7 +13,7 @@ export default class Agent {
     choose(previous: w.World, world: w.World): w.Action[] {
         this.beliefs.update(previous, world);
 
-        const actor = new Actor(world, this.beliefs);
+        const actor = Actor.create(world, this.beliefs);
         const actions = actor.choose();
 
         const robots = world.entities.filter(robot => robot.type === w.ItemType.RobotTeam0);
