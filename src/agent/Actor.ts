@@ -12,6 +12,7 @@ import Vec from '../util/vector';
 
 const MinimumVisibleOre = 5;
 const MaximumVisibleOre = 10;
+const MaximumTraps = 10;
 
 export default class Actor {
     private baitId: number = null;
@@ -190,7 +191,7 @@ export default class Actor {
                     if (this.world.teams[0].radarCooldown === 0 && (robot.pos.x === 0 || visibleOre < MinimumVisibleOre) && visibleOre < MaximumVisibleOre) {
                         actions.push(RequestIntent.evaluate(robot, w.ItemType.Radar, pathMap));
                     }
-                    if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0) {
+                    if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.trapCount() < MaximumTraps) {
                         actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, pathMap));
                     }
                 }
@@ -214,5 +215,15 @@ export default class Actor {
             }
         }
         return numRadars;
+    }
+
+    private trapCount(): number {
+        let numTraps = 0;
+        for (const entity of this.world.entities) {
+            if (entity.type === w.ItemType.Trap) {
+                ++numTraps;
+            }
+        }
+        return numTraps;
     }
 }
