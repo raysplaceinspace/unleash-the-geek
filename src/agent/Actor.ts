@@ -11,6 +11,7 @@ import * as ReturnEvaluator from './ReturnEvaluator';
 import Vec from '../util/vector';
 
 const TargetRadarCount = 3;
+const EnableBait = true;
 
 export default class Actor {
     private explosionMap: ExplosionMap;
@@ -36,7 +37,10 @@ export default class Actor {
         if (!pathMap) {
             const robot = this.world.entities.find(x => x.id === robotId);
             const explosionMap = this.getOrCreateExplosionMap();
-            pathMap = PathMap.generate(robot.pos, this.world, explosionMap);
+
+            const bait = EnableBait && (robot.id % this.world.numRobots === 0); // One of the robots will walk through all mines and set them off
+            pathMap = PathMap.generate(robot.pos, this.world, explosionMap, bait);
+
             this.pathMaps.set(robotId, pathMap);
         }
         return pathMap;
