@@ -51,7 +51,7 @@ export default class PathMap {
         return best;
     }
 
-    public static generate(from: Vec, bounds: traverse.Dimensions, explosionMap: ExplosionMap, bait?: boolean = false): PathMap {
+    public static generate(from: Vec, bounds: traverse.Dimensions, explosionMap: ExplosionMap, bait: boolean = false): PathMap {
         const pathMap = collections.create2D<number>(bounds.width, bounds.height, Infinity);
         const result = new PathMap(from, bounds, pathMap, bait);
         
