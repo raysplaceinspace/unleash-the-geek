@@ -49,11 +49,18 @@ export class DigIntent extends Intent {
             + 3 * radarCost
 
         const payoff = payoffs.payoff(dig.x, dig.y);
-        const destination = collections.minBy(traverse.neighbours(dig, pathMap.bounds), n => pathMap.cost(n));
+        const destination = collections.minBy(
+            traverse.neighbours(dig, pathMap.bounds),
+            n => DigIntent.evaluateDestination(n, pathMap));
         const moveCost = pathMap.cost(destination);
 
         const value = discount(payoff / (1 + divisor), moveCost);
         return new DigIntent(robot.id, dig, destination, value);
+    }
+
+    private static evaluateDestination(n: Vec, pathMap: PathMap) {
+        const returnTicks = n.x / w.MovementSpeed;
+        return pathMap.cost(n) + returnTicks;
     }
 
     duplicates(other: Intent): boolean {
