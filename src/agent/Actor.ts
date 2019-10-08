@@ -12,6 +12,7 @@ import RequestIntent from './RequestIntent';
 import ReturnIntent from './ReturnIntent';
 import Vec from '../util/vector';
 import WaitIntent from './WaitIntent';
+import ExplosionAvoider from './ExplosionAvoider';
 
 export default class Actor {
     private totalVisibleOre: number = null;
@@ -85,12 +86,13 @@ export default class Actor {
         }
 
         const result = new Map<number, w.Action>();
+        const explosionAvoider = new ExplosionAvoider(this.getOrCreateExplosionMap(), this.world);
         for (const robot of robots) {
             const potentials = potentialActions.get(robot.id);
             const intent = potentials[0] || this.generateNoop(robot.id);
 
             const pathMap = this.getOrCreatePathMap(robot.id);
-            result.set(robot.id, intent.toAction(robot, pathMap));
+            result.set(robot.id, intent.toAction(robot, explosionAvoider, pathMap));
         }
 
         return result;

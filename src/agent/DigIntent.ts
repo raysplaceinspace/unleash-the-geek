@@ -3,6 +3,7 @@ import * as traverse from '../util/traverse';
 import * as w from '../model';
 import Beliefs from './Beliefs';
 import { discount } from './Discount';
+import ExplosionAvoider from './ExplosionAvoider';
 import Intent from './Intent';
 import PayoffMap from './PayoffMap';
 import PathMap from './PathMap';
@@ -71,7 +72,7 @@ export default class DigIntent extends Intent {
         }
     }
 
-    toAction(robot: w.Entity, pathMap: PathMap): w.Action {
+    toAction(robot: w.Entity, explosionAvoider: ExplosionAvoider, pathMap: PathMap): w.Action {
         if (robot.pos.equals(this.destination)) {
             return {
                 entityId: robot.id,
@@ -80,11 +81,10 @@ export default class DigIntent extends Intent {
                 tag: this.target.string(),
             };
         } else {
-            const path = pathMap.pathTo(this.destination);
             return {
                 entityId: robot.id,
                 type: "move",
-                target: path[0],
+                target: explosionAvoider.claimPath(robot.id, pathMap, this.destination),
                 tag: this.target.string(),
             };
         }

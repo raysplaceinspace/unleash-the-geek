@@ -1,11 +1,12 @@
 import * as w from '../model';
+import ExplosionAvoider from './ExplosionAvoider';
 import PathMap from './PathMap';
 
 export abstract class Intent {
     constructor(public robotId: number, public value: number) {
     }
 
-    abstract toAction(robot: w.Entity, pathMap: PathMap): w.Action;
+    abstract toAction(robot: w.Entity, explosionAvoider: ExplosionAvoider, pathMap: PathMap): w.Action;
 
     subsumes(other: Intent): boolean {
         if (this.duplicates(other)) {

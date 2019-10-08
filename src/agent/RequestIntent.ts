@@ -1,5 +1,6 @@
 import * as w from '../model';
 import { discount } from './Discount';
+import ExplosionPath from './ExplosionAvoider';
 import Intent from './Intent';
 import PathMap from './PathMap';
 import Vec from '../util/vector';
@@ -19,7 +20,7 @@ export class RequestIntent extends Intent {
         return new RequestIntent(robot.id, item, value);
     }
 
-    toAction(robot: w.Entity, pathMap: PathMap): w.Action {
+    toAction(robot: w.Entity, explosionPath: ExplosionPath, pathMap: PathMap): w.Action {
         if (robot.pos.x === 0) {
             return {
                 entityId: robot.id,

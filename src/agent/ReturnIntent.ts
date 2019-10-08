@@ -2,11 +2,11 @@ import * as collections from '../util/collections';
 import * as traverse from '../util/traverse';
 import * as w from '../model';
 import { discount } from './Discount';
+import Beliefs from './Beliefs';
+import ExplosionAvoider from './ExplosionAvoider';
 import Intent from './Intent';
 import PathMap from './PathMap';
 import Vec from '../util/vector';
-import PayoffMap from './PayoffMap';
-import Beliefs from './Beliefs';
 
 export default class ReturnIntent extends Intent {
     type: "return";
@@ -47,12 +47,11 @@ export default class ReturnIntent extends Intent {
         return bounds.width;
     }
 
-    toAction(robot: w.Entity, pathMap: PathMap): w.Action {
-        const path = pathMap.pathTo(this.target);
+    toAction(robot: w.Entity, explosionAvoider: ExplosionAvoider, pathMap: PathMap): w.Action {
         return {
             entityId: robot.id,
             type: "move",
-            target: path[0],
+            target: explosionAvoider.claimPath(robot.id, pathMap, this.target),
         };
     }
 }
