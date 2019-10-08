@@ -24,9 +24,7 @@ export default class PathMap {
         while (!current.equals(this.from)) {
             path.unshift(current);
 
-            current = collections.minBy(
-                traverse.neighbours(current, this.bounds, w.MovementSpeed),
-                n => this.pathMap[n.y][n.x]);
+            current = this.previousNeighbour(target, current);
         }
 
         if (path.length === 0) {
@@ -35,6 +33,22 @@ export default class PathMap {
         }
 
         return path;
+    }
+
+    private previousNeighbour(target: Vec, current: Vec) {
+        let best: Vec = null;
+        let bestCost: number = Infinity;
+        let bestDistance: number = Infinity;
+        for (const n of traverse.neighbours(current, this.bounds, w.MovementSpeed)) {
+            const cost = this.pathMap[n.y][n.x];
+            const distance = Vec.distance(target, n);
+            if (cost < bestCost || cost === bestCost && distance < bestDistance) {
+                best = n;
+                bestCost = cost;
+                bestDistance = distance;
+            }
+        }
+        return best;
     }
 
     public static generate(from: Vec, bounds: traverse.Dimensions, explosionMap: ExplosionMap): PathMap {
