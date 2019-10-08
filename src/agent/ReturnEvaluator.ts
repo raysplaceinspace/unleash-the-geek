@@ -28,17 +28,19 @@ export class ReturnIntent extends Intent {
 
         const target = new Vec(0, y);
         const returnTicks = pathMap.cost(target);
+        const straightTicks = Vec.distance(target, robot.pos) / w.MovementSpeed;
 
         const nearestOre = ReturnIntent.findOreDistance(y, beliefs, pathMap.bounds);
         const nextOreTicks = nearestOre / w.MovementSpeed;
 
-        const value = discount(payoff, returnTicks + nextOreTicks);
+        const ticks = returnTicks + 0.25 * nextOreTicks + 0.1 * straightTicks;
+        const value = discount(payoff, ticks);
         return new ReturnIntent(robot.id, target, value);
     }
 
     private static findOreDistance(y: number, beliefs: Beliefs, bounds: traverse.Dimensions) {
         for (let x = 1; x < bounds.width; ++x) {
-            if (beliefs.oreProbability(x, y) > 0 && beliefs.trapProbability(x, y) <= 0) {
+            if (beliefs.oreProbability(x, y) >= 1 && beliefs.trapProbability(x, y) <= 0) {
                 return x;
             }
         }
