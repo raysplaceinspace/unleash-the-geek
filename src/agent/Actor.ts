@@ -10,10 +10,12 @@ import PayoffMap from './PayoffMap';
 import * as ReturnEvaluator from './ReturnEvaluator';
 import Vec from '../util/vector';
 
-const TargetRadarCount = 7;
+const MinimumVisibleOre = 5;
+const MaximumVisibleOre = 10;
 
 export default class Actor {
     private baitId: number = null;
+    private totalVisibleOre: number = null;
     private explosionMap: ExplosionMap;
     private pathMaps = new Map<number, PathMap>();
     private payoffMap: PayoffMap;
@@ -45,6 +47,13 @@ export default class Actor {
             }
         }
         return this.baitId;
+    }
+
+    private getOrCreateTotalVisibleOre(): number {
+        if (this.totalVisibleOre === null) {
+            this.totalVisibleOre = collections.sum(traverse.all(this.world), n => this.world.map[n.y][n.x].ore || 0);
+        }
+        return this.totalVisibleOre;
     }
 
     private getOrCreateExplosionMap(): ExplosionMap {
@@ -177,7 +186,8 @@ export default class Actor {
                 actions.push(ReturnEvaluator.generateBestReturn(robot, this.beliefs, pathMap));
             } else {
                 if (robot.carrying === w.ItemType.None) {
-                    if (this.world.teams[0].radarCooldown === 0 && (robot.pos.x === 0 || this.radarCount() < TargetRadarCount)) {
+                    const visibleOre = this.getOrCreateTotalVisibleOre();
+                    if (this.world.teams[0].radarCooldown === 0 && (robot.pos.x === 0 || visibleOre < MinimumVisibleOre) && visibleOre < MaximumVisibleOre) {
                         actions.push(RequestIntent.evaluate(robot, w.ItemType.Radar, pathMap));
                     }
                     if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0) {

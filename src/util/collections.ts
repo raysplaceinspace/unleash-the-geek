@@ -67,3 +67,11 @@ export function* filter<T>(items: Iterable<T>, selector: (item: T) => boolean): 
         }
     }
 }
+
+export function sum<T>(items: Iterable<T>, selector: (item: T) => number): number {
+    let total = 0;
+    for (const item of items) {
+        total += selector(item);
+    }
+    return total;
+}
