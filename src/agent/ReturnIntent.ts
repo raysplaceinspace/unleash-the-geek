@@ -8,19 +8,19 @@ import Vec from '../util/vector';
 import PayoffMap from './PayoffMap';
 import Beliefs from './Beliefs';
 
-export function generateBestReturn(robot: w.Entity, beliefs: Beliefs, pathMap: PathMap): ReturnIntent {
-    const intents = collections.map(
-        collections.range(pathMap.bounds.height),
-        y => ReturnIntent.evaluate(robot, y, beliefs, pathMap));
-    const best = collections.maxBy(intents, x => x.value);
-    return best;
-}
-
-export class ReturnIntent extends Intent {
+export default class ReturnIntent extends Intent {
     type: "return";
 
     private constructor(robotId: number, public target: Vec, value: number) {
         super(robotId, value);
+    }
+
+    public static generateBestReturn(robot: w.Entity, beliefs: Beliefs, pathMap: PathMap): ReturnIntent {
+        const intents = collections.map(
+            collections.range(pathMap.bounds.height),
+            y => ReturnIntent.evaluate(robot, y, beliefs, pathMap));
+        const best = collections.maxBy(intents, x => x.value);
+        return best;
     }
 
     public static evaluate(robot: w.Entity, y: number, beliefs: Beliefs, pathMap: PathMap): ReturnIntent {

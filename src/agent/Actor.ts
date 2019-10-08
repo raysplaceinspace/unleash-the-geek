@@ -2,13 +2,15 @@ import * as collections from '../util/collections';
 import * as traverse from '../util/traverse';
 import * as w from '../model';
 import Beliefs from './Beliefs';
-import * as DigEvaluator from './DigEvaluator';
+import DigIntent from './DigIntent';
 import ExplosionMap from './ExplosionMap';
-import { Intent, RequestIntent, WaitIntent } from './Intent';
+import Intent from './Intent';
 import PathMap from './PathMap';
 import PayoffMap from './PayoffMap';
-import * as ReturnEvaluator from './ReturnEvaluator';
+import RequestIntent from './RequestIntent';
+import ReturnIntent from './ReturnIntent';
 import Vec from '../util/vector';
+import WaitIntent from './WaitIntent';
 
 const MinimumVisibleOre = 10;
 const MaximumVisibleOre = 15;
@@ -190,7 +192,7 @@ export default class Actor {
         } else {
             const pathMap = this.getOrCreatePathMap(robot.id);
             if (robot.carrying === w.ItemType.Ore && robot.pos.x > 0) {
-                actions.push(ReturnEvaluator.generateBestReturn(robot, this.beliefs, pathMap));
+                actions.push(ReturnIntent.generateBestReturn(robot, this.beliefs, pathMap));
             } else {
                 if (robot.carrying === w.ItemType.None) {
                     const visibleOre = this.getOrCreateTotalVisibleOre();
@@ -203,7 +205,7 @@ export default class Actor {
                 }
 
                 const payoffMap = this.getOrCreatePayoffMap();
-                actions.push(...DigEvaluator.generateDigActions(robot, this.world, payoffMap, pathMap));
+                actions.push(...DigIntent.generateDigActions(robot, this.world, payoffMap, pathMap));
             }
         }
         return actions;

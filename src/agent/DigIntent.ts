@@ -18,23 +18,23 @@ function maximumValue(a: DigIntent, b: DigIntent) {
     }
 }
 
-export function generateDigActions(robot: w.Entity, world: w.World, payoffMap: PayoffMap, pathMap: PathMap): DigIntent[] {
-    const cellValues = [...collections.map(
-        traverse.all(world),
-        dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, pathMap))];
-    cellValues.sort(maximumValue);
-
-    const actionValues =
-        cellValues
-        .slice(0, world.numRobots)
-    return actionValues;
-}
-
-export class DigIntent extends Intent {
+export default class DigIntent extends Intent {
     type: "dig";
 
     private constructor(robotId: number, public target: Vec, public destination: Vec, value: number) {
         super(robotId, value);
+    }
+
+    public static generateDigActions(robot: w.Entity, world: w.World, payoffMap: PayoffMap, pathMap: PathMap): DigIntent[] {
+        const cellValues = [...collections.map(
+            traverse.all(world),
+            dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, pathMap))];
+        cellValues.sort(maximumValue);
+
+        const actionValues =
+            cellValues
+            .slice(0, world.numRobots)
+        return actionValues;
     }
 
     public static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap): DigIntent {
