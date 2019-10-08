@@ -52,7 +52,13 @@ export default class Actor {
 
     private getOrCreateTotalVisibleOre(): number {
         if (this.totalVisibleOre === null) {
-            this.totalVisibleOre = collections.sum(traverse.all(this.world), n => this.world.map[n.y][n.x].ore || 0);
+            this.totalVisibleOre = collections.sum(traverse.all(this.world), n => {
+                if (this.beliefs.trapProbability(n.x, n.y) <= 0) {
+                    return this.world.map[n.y][n.x].ore || 0;
+                } else {
+                    return 0;
+                }
+            });
         }
         return this.totalVisibleOre;
     }
