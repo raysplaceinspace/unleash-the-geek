@@ -180,7 +180,7 @@ export default class Actor {
 
                         actions.push(RequestIntent.evaluate(robot, w.ItemType.Radar, pathMap));
                     }
-                    if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.trapCount() < Params.MaximumTraps) {
+                    if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.activeTrapCount() < Params.MaximumTraps) {
                         actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, pathMap));
                     }
                 }
@@ -196,20 +196,10 @@ export default class Actor {
         return new WaitIntent(robotId, 0);
     }
 
-    private radarCount(): number {
-        let numRadars = 0;
-        for (const entity of this.world.entities) {
-            if (entity.type === w.ItemType.Radar) {
-                ++numRadars;
-            }
-        }
-        return numRadars;
-    }
-
-    private trapCount(): number {
+    private activeTrapCount(): number {
         let numTraps = 0;
         for (const entity of this.world.entities) {
-            if (entity.type === w.ItemType.Trap) {
+            if (entity.type === w.ItemType.Trap && this.beliefs.oreProbability(entity.pos.x, entity.pos.y) >= 1) {
                 ++numTraps;
             }
         }
