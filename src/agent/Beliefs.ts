@@ -3,6 +3,7 @@ import * as w from '../model';
 import Vec from '../util/vector';
 import CellBelief from './CellBelief';
 import EnemyRobotBelief from './EnemyRobotBelief';
+import * as Params from './Params';
 
 export default class Beliefs {
     private beliefs: CellBelief[][];
@@ -62,7 +63,7 @@ export default class Beliefs {
 
                     const cellBelief = this.beliefs[target.y][target.x];
                     cellBelief.observedSelfDig(success);
-                    for (const p of traverse.neighbours(target, world, 2)) {
+                    for (const p of traverse.neighbours(target, world, Params.OreNeighbourRange)) {
                         this.beliefs[p.y][p.x].observedNeighbour(success, cellBelief);
                     }
                 }

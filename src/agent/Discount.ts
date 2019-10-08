@@ -1,5 +1,5 @@
-const DiscountRate = 0.9;
+import * as Params from './Params';
 
 export function discount(payoff: number, ticks: number) {
-    return payoff * Math.pow(DiscountRate, ticks);
+    return payoff * Math.pow(Params.DiscountRate, ticks);
 }

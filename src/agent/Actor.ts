@@ -6,15 +6,12 @@ import DigIntent from './DigIntent';
 import ExplosionMap from './ExplosionMap';
 import Intent from './Intent';
 import PathMap from './PathMap';
+import * as Params from './Params';
 import PayoffMap from './PayoffMap';
 import RequestIntent from './RequestIntent';
 import ReturnIntent from './ReturnIntent';
 import Vec from '../util/vector';
 import WaitIntent from './WaitIntent';
-
-const MinimumVisibleOre = 5;
-const MaximumVisibleOre = 25;
-const MaximumTraps = 10;
 
 export default class Actor {
     private baitId: number = null;
@@ -196,10 +193,10 @@ export default class Actor {
             } else {
                 if (robot.carrying === w.ItemType.None) {
                     const visibleOre = this.getOrCreateTotalVisibleOre();
-                    if (this.world.teams[0].radarCooldown === 0 && (robot.pos.x === 0 || visibleOre < MinimumVisibleOre) && visibleOre < MaximumVisibleOre) {
+                    if (this.world.teams[0].radarCooldown === 0 && (robot.pos.x === 0 || visibleOre < Params.MinimumVisibleOre) && visibleOre < Params.MaximumVisibleOre) {
                         actions.push(RequestIntent.evaluate(robot, w.ItemType.Radar, pathMap));
                     }
-                    if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.trapCount() < MaximumTraps) {
+                    if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.trapCount() < Params.MaximumTraps) {
                         actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, pathMap));
                     }
                 }
