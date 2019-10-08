@@ -6,10 +6,12 @@ import Beliefs from './Beliefs';
 
 export default class ExplosionMap {
     numExplosions = 0;
+    private exploded: boolean[][];
     private explosionIds: number[][];
     private explosionMap: number[][];
 
     private constructor(private bounds: traverse.Dimensions) {
+        this.exploded = collections.create2D<boolean>(bounds.width, bounds.height, false);
         this.explosionIds = collections.create2D<number>(bounds.width, bounds.height, null);
         this.explosionMap = collections.create2D<number>(bounds.width, bounds.height, 0);
     }
@@ -19,8 +21,7 @@ export default class ExplosionMap {
     }
 
     public getExplosionId(x: number, y: number): number {
-        const explosionId = this.explosionIds[y][x];
-        return explosionId;
+        return this.explosionIds[y][x];
     }
 
     public static generate(world: w.World, beliefs: Beliefs) {
@@ -32,8 +33,9 @@ export default class ExplosionMap {
                 const carryingProbability = beliefs.carryingProbability(enemy.id);
                 if (carryingProbability > 0) {
                     // The enemy can place the trap here and detonate it before we can escape
+                    const explosionId = nextExplosionId++;
                     for (const trap of traverse.neighbours(enemy.pos, world)) {
-                        result.explodeTrap(nextExplosionId++, trap, carryingProbability, beliefs);
+                        result.explodeTrap(explosionId, trap, carryingProbability, beliefs);
                     }
                 }
 
@@ -55,10 +57,10 @@ export default class ExplosionMap {
             return;
         }
 
-        if (this.explosionIds[trap.y][trap.x]) {
+        if (this.exploded[trap.y][trap.x]) {
             return;
         }
-        this.explosionIds[trap.y][trap.x] = explosionId;
+        this.exploded[trap.y][trap.x] = true;
 
         ++this.numExplosions;
 
@@ -66,6 +68,7 @@ export default class ExplosionMap {
             const previous = this.explosionMap[explosion.y][explosion.x];
             if (previous < trapProbability) {
                 this.explosionMap[explosion.y][explosion.x] = trapProbability;
+                this.explosionIds[explosion.y][explosion.x] = explosionId;
             }
         }
 
