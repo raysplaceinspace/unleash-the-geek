@@ -10,8 +10,8 @@ import PayoffMap from './PayoffMap';
 import * as ReturnEvaluator from './ReturnEvaluator';
 import Vec from '../util/vector';
 
-const MinimumVisibleOre = 5;
-const MaximumVisibleOre = 10;
+const MinimumVisibleOre = 10;
+const MaximumVisibleOre = 15;
 const MaximumTraps = 10;
 
 export default class Actor {
