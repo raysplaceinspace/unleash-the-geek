@@ -10,7 +10,7 @@ export default class PathMap {
     public assignments = 0;
     public expansions = new Set<number>();
 
-    private constructor(public from: Vec, public bounds: traverse.Dimensions, private pathMap: number[][], public bait = false) {
+    private constructor(public from: Vec, public bounds: traverse.Dimensions, private pathMap: number[][]) {
     }
 
     public cost(target: Vec) {
@@ -51,9 +51,9 @@ export default class PathMap {
         return best;
     }
 
-    public static generate(from: Vec, bounds: traverse.Dimensions, explosionMap: ExplosionMap, bait: boolean = false): PathMap {
+    public static generate(from: Vec, bounds: traverse.Dimensions, explosionMap: ExplosionMap): PathMap {
         const pathMap = collections.create2D<number>(bounds.width, bounds.height, Infinity);
-        const result = new PathMap(from, bounds, pathMap, bait);
+        const result = new PathMap(from, bounds, pathMap);
         
         if (traverse.withinBounds(from, bounds)) {
             const initial = new Neighbour(from, 0);
@@ -99,7 +99,7 @@ export default class PathMap {
             }
 
             let next = cost + 1;
-            if (!this.bait && explosionMap.explodeProbability(n.x, n.y) > 0) {
+            if (explosionMap.explodeProbability(n.x, n.y) > 0) {
                 next += ExplosionCost;
             }
 
