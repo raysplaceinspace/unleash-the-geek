@@ -5,6 +5,8 @@ import Beliefs from './Beliefs';
 import PathMap from './PathMap';
 import Vec from '../util/vector';
 
+const OrePayoffPower = 2;
+
 export default class PayoffMap {
     private constructor(private payoffMap: number[][]) {
     }
@@ -39,9 +41,9 @@ export default class PayoffMap {
         }
 
         const returnTicks = cell.pos.x / w.MovementSpeed;
-        const oreProbability = beliefs.oreProbability(cell.pos.x, cell.pos.y);
+        const orePayoff = Math.pow(beliefs.oreProbability(cell.pos.x, cell.pos.y), OrePayoffPower);
 
-        const payoff = discount(oreProbability, returnTicks);
+        const payoff = discount(orePayoff, returnTicks);
         return payoff;
     }
 }
