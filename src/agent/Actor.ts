@@ -12,8 +12,8 @@ import ReturnIntent from './ReturnIntent';
 import Vec from '../util/vector';
 import WaitIntent from './WaitIntent';
 
-const MinimumVisibleOre = 10;
-const MaximumVisibleOre = 15;
+const MinimumVisibleOre = 5;
+const MaximumVisibleOre = 25;
 const MaximumTraps = 10;
 
 export default class Actor {
@@ -56,7 +56,7 @@ export default class Actor {
         if (this.totalVisibleOre === null) {
             this.totalVisibleOre = collections.sum(traverse.all(this.world), n => {
                 if (this.beliefs.trapProbability(n.x, n.y) <= 0) {
-                    return this.world.map[n.y][n.x].ore || 0;
+                    return this.world.map[n.y][n.x].ore ? 1 : 0;
                 } else {
                     return 0;
                 }
