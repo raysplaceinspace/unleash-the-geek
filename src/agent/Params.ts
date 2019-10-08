@@ -1,7 +1,7 @@
 export const DiscountRate = 0.9;
 
-export const MinimumVisibleOre = 5;
-export const MaximumVisibleOre = 25;
+export const MinimumVisibleOrePerRobot = 1;
+export const MaximumVisibleOre = 100;
 export const MaximumTraps = 10;
 
 // When successfully dug ore at a cell, increase probability of ore in neighbouring cells within this range

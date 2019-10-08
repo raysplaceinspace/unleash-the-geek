@@ -172,7 +172,12 @@ export default class Actor {
             } else {
                 if (robot.carrying === w.ItemType.None) {
                     const visibleOre = this.getOrCreateTotalVisibleOre();
-                    if (this.world.teams[0].radarCooldown === 0 && (robot.pos.x === 0 || visibleOre < Params.MinimumVisibleOre) && visibleOre < Params.MaximumVisibleOre) {
+                    const numRobots = this.world.entities.filter(r => r.type === w.ItemType.RobotTeam0).length;
+
+                    if (this.world.teams[0].radarCooldown === 0
+                        && (robot.pos.x === 0 || visibleOre < Params.MinimumVisibleOrePerRobot * numRobots)
+                        && visibleOre < Params.MaximumVisibleOre) {
+
                         actions.push(RequestIntent.evaluate(robot, w.ItemType.Radar, pathMap));
                     }
                     if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.trapCount() < Params.MaximumTraps) {
