@@ -4,6 +4,9 @@ export const MinimumVisibleOrePerRobot = 1;
 export const MaximumVisibleOre = 100;
 export const MaximumTraps = 10;
 
+export const RadarPlacementWeight = 10;
+export const TrapPlacementWeight = 1;
+
 // When successfully dug ore at a cell, increase probability of ore in neighbouring cells within this range
 export const OreNeighbourRange = 2;
 

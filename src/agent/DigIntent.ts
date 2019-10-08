@@ -1,10 +1,10 @@
 import * as collections from '../util/collections';
 import * as traverse from '../util/traverse';
 import * as w from '../model';
-import Beliefs from './Beliefs';
 import { discount } from './Discount';
 import ExplosionAvoider from './ExplosionAvoider';
 import Intent from './Intent';
+import * as Params from './Params';
 import PayoffMap from './PayoffMap';
 import PathMap from './PathMap';
 import Vec from '../util/vector';
@@ -46,8 +46,8 @@ export default class DigIntent extends Intent {
         const placementCost = hasTrap ? DigIntent.placementCost(dig, world) : 0;
 
         const divisor =
-            + 1 + placementCost
-            + 3 * radarCost
+            + Params.TrapPlacementWeight + placementCost
+            + Params.RadarPlacementWeight * radarCost
 
         const payoff = payoffs.payoff(dig.x, dig.y);
         const destination = collections.minBy(
