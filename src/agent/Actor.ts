@@ -11,9 +11,9 @@ import * as ReturnEvaluator from './ReturnEvaluator';
 import Vec from '../util/vector';
 
 const TargetRadarCount = 3;
-const EnableBait = true;
 
 export default class Actor {
+    private baitId: number = null;
     private explosionMap: ExplosionMap;
     private pathMaps = new Map<number, PathMap>();
     private payoffMap: PayoffMap;
@@ -23,6 +23,28 @@ export default class Actor {
 
     public static create(world: w.World, beliefs: Beliefs) {
         return new Actor(world, beliefs);
+    }
+
+     // One of the robots is allowed to walk through mines because losing this would be a 1:1 tradeoff so an even loss for both
+    private getOrCreateBaitId(): number {
+        if (this.baitId === null) {
+            const robots = this.world.entities.filter(robot => robot.type === w.ItemType.RobotTeam0);
+            const enemyRobots = this.world.entities.filter(robot => robot.type === w.ItemType.RobotTeam1);
+
+            if (robots.length >= enemyRobots.length) {
+                const bait = collections.maxBy(robots, r => {
+                    let score = r.id;
+                    if (r.carrying === w.ItemType.Ore) {
+                        score += 100 + (this.world.width - r.pos.x); // Choose robot closest to headquarters
+                    }
+                    return score;
+                });
+                this.baitId = bait ? bait.id : -1;
+            } else {
+                this.baitId = -1;
+            }
+        }
+        return this.baitId;
     }
 
     private getOrCreateExplosionMap(): ExplosionMap {
@@ -38,7 +60,7 @@ export default class Actor {
             const robot = this.world.entities.find(x => x.id === robotId);
             const explosionMap = this.getOrCreateExplosionMap();
 
-            const bait = EnableBait && (robot.id % this.world.numRobots === 0); // One of the robots will walk through all mines and set them off
+            const bait = this.getOrCreateBaitId() === robot.id;
             pathMap = PathMap.generate(robot.pos, this.world, explosionMap, bait);
 
             this.pathMaps.set(robotId, pathMap);
