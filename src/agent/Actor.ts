@@ -10,7 +10,7 @@ import PayoffMap from './PayoffMap';
 import * as ReturnEvaluator from './ReturnEvaluator';
 import Vec from '../util/vector';
 
-const TargetRadarCount = 3;
+const TargetRadarCount = 7;
 
 export default class Actor {
     private baitId: number = null;
