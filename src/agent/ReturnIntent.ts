@@ -33,7 +33,7 @@ export default class ReturnIntent extends Intent {
         const nearestOre = ReturnIntent.findOreDistance(y, beliefs, pathMap.bounds);
         const nextOreTicks = nearestOre / w.MovementSpeed;
 
-        const ticks = returnTicks + 0.1 * nextOreTicks + 0.5 * straightTicks;
+        const ticks = returnTicks + 0.1 * nextOreTicks + 0.1 * straightTicks;
         const value = discount(payoff, ticks);
         return new ReturnIntent(robot.id, target, value);
     }
