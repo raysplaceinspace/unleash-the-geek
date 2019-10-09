@@ -45,7 +45,7 @@ export default class Beliefs {
 
     private updateBeliefsFromDigs(previous: w.World, world: w.World) {
         const allDigs = this.findDigs(previous, world);
-        const unexplainedDigs = new Map(allDigs);
+        const unexplainedDigs = [...allDigs];
         world.entities.forEach(robot => {
             if (robot.type === w.ItemType.RobotTeam0 && !robot.dead) {
                 const previousRobot = previous.entities.find(r => r.id === robot.id);
@@ -55,7 +55,13 @@ export default class Beliefs {
                     && Vec.l1(previousRobot.pos, robot.pos) === 0 // Stand still to dig
                     && Vec.l1(previousAction.target, previousRobot.pos) <= w.DigRange) { // Must be next to cell to dig it
 
-                    unexplainedDigs.delete(previousAction.target.string());
+                    // Dig has been explained
+                    {
+                        let index = unexplainedDigs.findIndex(x => x.equals(previousAction.target));
+                        if (index !== -1) {
+                            unexplainedDigs.splice(index, 1);
+                        }
+                    }
 
                     const target = previousAction.target;
                     const success = previousRobot && previousRobot.carrying !== robot.carrying && robot.carrying === w.ItemType.Ore;
@@ -77,7 +83,7 @@ export default class Beliefs {
                 const previousRobot = previous.entities.find(r => r.id === robot.id);
                 if (previousRobot && previousRobot.pos.x === robot.pos.x && previousRobot.pos.y === robot.pos.y) {
                     let knownDig = new Array<Vec>();
-                    for (const dig of unexplainedDigs.values()) {
+                    for (const dig of unexplainedDigs) {
                         if (Vec.l1(dig, previousRobot.pos) <= w.DigRange) {
                             knownDig.push(dig);
                         }
@@ -150,17 +156,22 @@ export default class Beliefs {
         return enemyBelief;
     }
 
-    private findDigs(previous: w.World, world: w.World): Map<string, Vec> {
-        const result = new Map<string, Vec>();
+    private findDigs(previous: w.World, world: w.World): Vec[] {
+        const result = new Array<Vec>();
         for (let y = 0; y < world.height; ++y) {
             for (let x = 0; x < world.width; ++x) {
                 const oldCell = previous.map[y][x];
                 const newCell = world.map[y][x];
 
-                if (newCell.hole && !oldCell.hole
-                    || newCell.ore !== null && oldCell.ore !== null && newCell.ore < oldCell.ore) {
+                if (newCell.hole && !oldCell.hole) {
+                    result.push(newCell.pos);
+                }
 
-                    result.set(newCell.pos.string(), newCell.pos);
+                if (newCell.ore !== null && oldCell.ore !== null && newCell.ore < oldCell.ore) {
+                    let numDigs = oldCell.ore - newCell.ore;
+                    for (let i = 0; i < numDigs; ++i) {
+                        result.push(newCell.pos);
+                    }
                 }
             }
         }
