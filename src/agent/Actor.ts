@@ -78,7 +78,7 @@ export default class Actor {
     }
 
     choose(): Map<number, w.Action> {
-        // console.error(this.formatMap());
+        console.error(this.formatMap());
 
         const robots = this.world.entities.filter(r => r.type === w.ItemType.RobotTeam0);
 
@@ -110,7 +110,7 @@ export default class Actor {
     private formatMap() {
         const explosionMap = this.getOrCreateExplosionMap();
 
-        let result = '';
+        let result = ' ';
         for (let x = 0; x < this.world.width; ++x) {
             result += `${(x % 10)}`;
         }

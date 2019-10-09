@@ -40,7 +40,7 @@ export default class ExplosionMap {
                 }
 
                 // The enemy can reach this trap and explode it before we can escape
-                for (const trap of traverse.neighbours(enemy.pos, world, w.MovementSpeed)) {
+                for (const trap of traverse.neighbours(enemy.pos, world, w.MovementSpeed + w.DigRange)) {
                     const trapProbability = beliefs.trapProbability(trap.x, trap.y);
                     if (trapProbability > 0) {
                         result.explodeTrap(nextExplosionId++, trap, trapProbability, beliefs);
