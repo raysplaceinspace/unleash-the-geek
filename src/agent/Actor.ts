@@ -102,7 +102,7 @@ export default class Actor {
             result.set(robot.id, intent.toAction(robot, explosionAvoider, pathMap));
         }
 
-        console.error(this.formatMap(explosionAvoider));
+        // console.error(this.formatMap(explosionAvoider));
 
         return result;
     }
