@@ -68,6 +68,14 @@ export function* filter<T>(items: Iterable<T>, selector: (item: T) => boolean): 
     }
 }
 
+export function toArray<T>(items: Iterable<T>): T[] {
+    const result = new Array<T>();
+    for (const item of items) {
+        result.push(item);
+    }
+    return result;
+}
+
 export function sum<T>(items: Iterable<T>, selector: (item: T) => number): number {
     let total = 0;
     for (const item of items) {

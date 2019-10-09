@@ -14,7 +14,7 @@ export default class ExplosionAvoider {
     public assignedRobots(target: Vec): number[] {
         const explosionIds = this.explosionMap.getExplosionIds(target.x, target.y);
         if (explosionIds) {
-            return explosionIds.map(explosionId => this.claimedExplosions.get(explosionId)).filter(x => !!x);
+            return collections.toArray(explosionIds).map(explosionId => this.claimedExplosions.get(explosionId)).filter(x => !!x);
         }
         return [];
     }
@@ -28,6 +28,7 @@ export default class ExplosionAvoider {
         if (claimedDirectPath) {
             return direct;
         } else {
+            console.error(`Robot ${robotId} avoiding ${direct.string()}`);
             const path = pathMap.pathTo(target);
             return path[0];
         }
@@ -42,12 +43,10 @@ export default class ExplosionAvoider {
         }
 
         for (const explosionId of explosionIds) {
-            if (explosionId) {
-                const claimedRobotId = this.claimedExplosions.get(explosionId);
-                if (claimedRobotId && claimedRobotId !== robotId) {
-                    // There is an explosion at this cell that another robot has claimed
-                    return false;
-                }
+            const claimedRobotId = this.claimedExplosions.get(explosionId);
+            if (typeof claimedRobotId === 'number' && claimedRobotId !== robotId) {
+                // There is an explosion at this cell that another robot has claimed
+                return false;
             }
         }
         

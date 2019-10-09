@@ -1,7 +1,9 @@
+import * as collections from '../util/collections';
 import * as w from '../model';
 import { discount } from './Discount';
 import ExplosionAvoider from './ExplosionAvoider';
 import Intent from './Intent';
+import * as Params from './Params';
 import PathMap from './PathMap';
 import Vec from '../util/vector';
 import ExplosionMap from './ExplosionMap';
@@ -11,11 +13,22 @@ export class RequestIntent extends Intent {
         super(robotId, value);
     }
 
-    public static evaluate(robot: w.Entity, item: number, pathMap: PathMap) {
+    public static evaluate(robot: w.Entity, item: number, pathMap: PathMap, explosionMap: ExplosionMap) {
+        const intents = collections.map(
+            collections.range(pathMap.bounds.height),
+            y => RequestIntent.evaluateAt(robot, y, item, pathMap, explosionMap));
+        const best = collections.maxBy(intents, x => x.value);
+        return best;
+    }
+
+    private static evaluateAt(robot: w.Entity, y: number, item: number, pathMap: PathMap, explosionMap: ExplosionMap): RequestIntent {
         const payoff = 1;
 
-        const target = new Vec(0, robot.pos.y);
-        const returnTicks = pathMap.cost(target);
+        const target = new Vec(0, y);
+        let returnTicks = pathMap.cost(target);
+        if (explosionMap.explodeProbability(target.x, target.y) > 0) {
+            returnTicks += Params.ExplosionCost;
+        }
 
         const value = discount(payoff, returnTicks);
         return new RequestIntent(robot.id, item, value);

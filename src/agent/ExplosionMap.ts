@@ -6,13 +6,13 @@ import Beliefs from './Beliefs';
 
 export default class ExplosionMap {
     numExplosions = 0;
-    private exploded: boolean[][];
-    private explosionIds: number[][][];
+    private explosionIds: Set<number>[][];
     private explosionMap: number[][];
 
+    private nextExplosionId = 1;
+
     private constructor(private bounds: traverse.Dimensions) {
-        this.exploded = collections.create2D<boolean>(bounds.width, bounds.height, false);
-        this.explosionIds = collections.create2D<number[]>(bounds.width, bounds.height, null);
+        this.explosionIds = collections.create2D<Set<number>>(bounds.width, bounds.height, null);
         this.explosionMap = collections.create2D<number>(bounds.width, bounds.height, 0);
     }
 
@@ -20,22 +20,20 @@ export default class ExplosionMap {
         return this.explosionMap[y][x];
     }
 
-    public getExplosionIds(x: number, y: number): number[] {
+    public getExplosionIds(x: number, y: number): Set<number> {
         return this.explosionIds[y][x];
     }
 
     public static generate(world: w.World, beliefs: Beliefs) {
         const result = new ExplosionMap(world);
 
-        let nextExplosionId = 1;
         world.entities.forEach(enemy => {
             if (enemy.type === w.ItemType.RobotTeam1) {
                 const carryingProbability = beliefs.carryingProbability(enemy.id);
                 if (carryingProbability > 0) {
                     // The enemy can place the trap here and detonate it before we can escape
-                    const explosionId = nextExplosionId++;
                     for (const trap of traverse.neighbours(enemy.pos, world)) {
-                        result.explodeTrap(explosionId, trap, carryingProbability, beliefs);
+                        result.explodeTrap(trap, carryingProbability, beliefs);
                     }
                 }
 
@@ -43,7 +41,7 @@ export default class ExplosionMap {
                 for (const trap of traverse.neighbours(enemy.pos, world, w.MovementSpeed + w.DigRange)) {
                     const trapProbability = beliefs.trapProbability(trap.x, trap.y);
                     if (trapProbability > 0) {
-                        result.explodeTrap(nextExplosionId++, trap, trapProbability, beliefs);
+                        result.explodeTrap(trap, trapProbability, beliefs);
                     }
                 }
             }
@@ -52,36 +50,48 @@ export default class ExplosionMap {
         return result;
     }
 
-    private explodeTrap(explosionId: number, trap: Vec, trapProbability: number, beliefs: Beliefs) {
-        if (trapProbability <= 0) {
+    private explodeTrap(trap: Vec, trapProbability: number, beliefs: Beliefs, explosion: Explosion = null) {
+        if (trapProbability <= 0 || trap.x <= 0) { // traps can never be in headquarters
             return;
         }
 
-        if (this.exploded[trap.y][trap.x]) {
+        if (!explosion) {
+            explosion = new Explosion(this.nextExplosionId++);
+        }
+
+        if (explosion.visited.has(trap.hash())) {
             return;
         }
-        this.exploded[trap.y][trap.x] = true;
+        explosion.visited.add(trap.hash());
 
         ++this.numExplosions;
 
-        for (const explosion of traverse.neighbours(trap, this.bounds)) {
-            const previousProbability = this.explosionMap[explosion.y][explosion.x];
+        for (const n of traverse.neighbours(trap, this.bounds)) {
+            // Set explosion probability
+            const previousProbability = this.explosionMap[n.y][n.x];
             if (previousProbability < trapProbability) {
-                this.explosionMap[explosion.y][explosion.x] = trapProbability;
+                this.explosionMap[n.y][n.x] = trapProbability;
             }
 
-            let explosionIds = this.explosionIds[explosion.y][explosion.x];
+            // Mark neighbours with explosionId
+            let explosionIds = this.explosionIds[n.y][n.x];
             if (!explosionIds) {
-                this.explosionIds[explosion.y][explosion.x] = explosionIds = [];
+                this.explosionIds[n.y][n.x] = explosionIds = new Set<number>();
             }
-            explosionIds.push(explosionId);
-        }
+            explosionIds.add(explosion.explosionId);
 
-        for (const explosion of traverse.neighbours(trap, this.bounds)) {
-            const nextTrapProbability = beliefs.trapProbability(explosion.x, explosion.y);
+            // Explode other traps
+            const nextTrapProbability = beliefs.trapProbability(n.x, n.y);
             if (nextTrapProbability > 0) {
-                this.explodeTrap(explosionId, explosion, nextTrapProbability, beliefs);
+                this.explodeTrap(n, nextTrapProbability, beliefs, explosion);
             }
         }
+    }
+}
+
+class Explosion {
+    visited = new Set<number>();
+
+    constructor(public explosionId: number) {
     }
 }

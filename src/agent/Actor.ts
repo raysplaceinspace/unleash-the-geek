@@ -129,7 +129,7 @@ export default class Actor {
                     if (trap) {
                         const assignedRobotIds = explosionAvoider.assignedRobots(cell.pos);
                         const assignedRobotId = assignedRobotIds && assignedRobotIds.length > 0 ? assignedRobotIds[0] : null;
-                        c = assignedRobotId ? `${assignedRobotId}` : '*';
+                        c = typeof assignedRobotId === 'number' ? `${assignedRobotId}` : '*';
                     } else {
                         c = 'x';
                     }
@@ -187,6 +187,8 @@ export default class Actor {
                 actions.push(ReturnIntent.generateBestReturn(robot, returnMap, pathMap));
             } else {
                 if (robot.carrying === w.ItemType.None) {
+                    const explosionMap = this.getOrCreateExplosionMap();
+
                     const visibleOre = this.getOrCreateTotalVisibleOre();
                     const numRobots = this.world.entities.filter(r => r.type === w.ItemType.RobotTeam0).length;
 
@@ -194,10 +196,10 @@ export default class Actor {
                         && (robot.pos.x === 0 || visibleOre < Params.MinimumVisibleOrePerRobot * numRobots)
                         && visibleOre < Params.MaximumVisibleOre) {
 
-                        actions.push(RequestIntent.evaluate(robot, w.ItemType.Radar, pathMap));
+                        actions.push(RequestIntent.evaluate(robot, w.ItemType.Radar, pathMap, explosionMap));
                     }
                     if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.activeTrapCount() < Params.MaximumTraps) {
-                        actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, pathMap));
+                        actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, pathMap, explosionMap));
                     }
                 }
 
