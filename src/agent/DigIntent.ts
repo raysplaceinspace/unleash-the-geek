@@ -78,14 +78,14 @@ export default class DigIntent extends Intent {
                 entityId: robot.id,
                 type: "dig",
                 target: this.target,
-                tag: this.target.string(),
+                tag: `[${this.target.string()}]`,
             };
         } else {
             return {
                 entityId: robot.id,
                 type: "move",
                 target: explosionAvoider.claimPath(robot.id, pathMap, this.destination),
-                tag: this.target.string(),
+                tag: `[${this.target.string()}]`,
             };
         }
     }
