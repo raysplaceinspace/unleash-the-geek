@@ -1,7 +1,7 @@
 export const DiscountRate = 0.9;
 
 export const OreStartX = 8;
-export const OreBeforeStartXPriorBelief = -10;
+export const OreBeforeStartXPriorBelief = -1;
 
 export const MinimumVisibleOrePerRobot = 1;
 export const MaximumVisibleOre = 100;
