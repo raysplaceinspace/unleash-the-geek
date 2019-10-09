@@ -2,6 +2,7 @@ import * as traverse from '../util/traverse';
 import * as w from '../model';
 import { discount } from './Discount';
 import Beliefs from './Beliefs';
+import ExplosionMap from './ExplosionMap';
 import * as Params from './Params';
 import Vec from '../util/vector';
 
@@ -33,7 +34,9 @@ export default class ReturnMap {
         const returnMap = new Array<number>();
         for (let y = 0; y < bounds.height; ++y) {
             const distance = Math.min(distances[y], bounds.width);
-            const ticks = distance / w.MovementSpeed;
+
+            let ticks = distance / w.MovementSpeed;
+
             returnMap[y] = discount(1, ticks);
         }
 

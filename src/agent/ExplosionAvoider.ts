@@ -11,13 +11,21 @@ export default class ExplosionAvoider {
     constructor(private explosionMap: ExplosionMap, private bounds: traverse.Dimensions) {
     }
 
+    public assignedRobots(target: Vec): number[] {
+        const explosionIds = this.explosionMap.getExplosionIds(target.x, target.y);
+        if (explosionIds) {
+            return explosionIds.map(explosionId => this.claimedExplosions.get(explosionId)).filter(x => !!x);
+        }
+        return [];
+    }
+
     public claimPath(robotId: number, pathMap: PathMap, target: Vec): Vec {
         const direct = collections.minBy(
             traverse.neighbours(pathMap.from, this.bounds, w.MovementSpeed),
             n => Vec.distance(target, n));
         
-        const directAllowed = this.claim(robotId, direct.x, direct.y);
-        if (directAllowed) {
+        const claimedDirectPath = this.claim(robotId, direct.x, direct.y);
+        if (claimedDirectPath) {
             return direct;
         } else {
             const path = pathMap.pathTo(target);
@@ -28,20 +36,25 @@ export default class ExplosionAvoider {
     // Return whether this robot can go to this location
     // Allow one robot to enter an explosion at a time, because if an enemy chooses to kamikaze, it is a fair 1:1 trade
     private claim(robotId: number, x: number, y: number): boolean {
-        const explosionId = this.explosionMap.getExplosionId(x, y);
-        if (explosionId) {
-            const claimedRobotId = this.claimedExplosions.get(explosionId);
-            if (claimedRobotId === robotId) {
-                return true;
-            } else if (claimedRobotId) {
-                // Another robot claimed this explosion
-                return false;
-            } else {
-                this.claimedExplosions.set(explosionId, robotId);
-                return true;
-            }
-        } else {
+        const explosionIds = this.explosionMap.getExplosionIds(x, y);
+        if (!explosionIds) {
             return true;
         }
+
+        for (const explosionId of explosionIds) {
+            if (explosionId) {
+                const claimedRobotId = this.claimedExplosions.get(explosionId);
+                if (claimedRobotId && claimedRobotId !== robotId) {
+                    // There is an explosion at this cell that another robot has claimed
+                    return false;
+                }
+            }
+        }
+        
+        // Claim all explosions at this cell
+        for (const explosionId of explosionIds) {
+            this.claimedExplosions.set(explosionId, robotId);
+        }
+        return true;
     }
 }

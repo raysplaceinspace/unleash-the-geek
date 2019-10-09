@@ -78,8 +78,6 @@ export default class Actor {
     }
 
     choose(): Map<number, w.Action> {
-        console.error(this.formatMap());
-
         const robots = this.world.entities.filter(r => r.type === w.ItemType.RobotTeam0);
 
         const potentialActions = this.evaluateChoices(robots);
@@ -104,10 +102,12 @@ export default class Actor {
             result.set(robot.id, intent.toAction(robot, explosionAvoider, pathMap));
         }
 
+        console.error(this.formatMap(explosionAvoider));
+
         return result;
     }
 
-    private formatMap() {
+    private formatMap(explosionAvoider: ExplosionAvoider) {
         const explosionMap = this.getOrCreateExplosionMap();
 
         let result = ' ';
@@ -126,7 +126,13 @@ export default class Actor {
                 const explosion = explosionMap.explodeProbability(x, y) > 0;
                 const enemy = this.world.entities.some(v => v.type === w.ItemType.RobotTeam1 && v.pos.equals(cell.pos));
                 if (explosion) {
-                    c = trap ? '*' : 'x';
+                    if (trap) {
+                        const assignedRobotIds = explosionAvoider.assignedRobots(cell.pos);
+                        const assignedRobotId = assignedRobotIds && assignedRobotIds.length > 0 ? assignedRobotIds[0] : null;
+                        c = assignedRobotId ? `${assignedRobotId}` : '*';
+                    } else {
+                        c = 'x';
+                    }
                 } else if (trap) {
                     c = 't';
                 } else if (enemy) {

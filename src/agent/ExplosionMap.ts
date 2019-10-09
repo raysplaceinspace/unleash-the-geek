@@ -7,12 +7,12 @@ import Beliefs from './Beliefs';
 export default class ExplosionMap {
     numExplosions = 0;
     private exploded: boolean[][];
-    private explosionIds: number[][];
+    private explosionIds: number[][][];
     private explosionMap: number[][];
 
     private constructor(private bounds: traverse.Dimensions) {
         this.exploded = collections.create2D<boolean>(bounds.width, bounds.height, false);
-        this.explosionIds = collections.create2D<number>(bounds.width, bounds.height, null);
+        this.explosionIds = collections.create2D<number[]>(bounds.width, bounds.height, null);
         this.explosionMap = collections.create2D<number>(bounds.width, bounds.height, 0);
     }
 
@@ -20,7 +20,7 @@ export default class ExplosionMap {
         return this.explosionMap[y][x];
     }
 
-    public getExplosionId(x: number, y: number): number {
+    public getExplosionIds(x: number, y: number): number[] {
         return this.explosionIds[y][x];
     }
 
@@ -65,11 +65,16 @@ export default class ExplosionMap {
         ++this.numExplosions;
 
         for (const explosion of traverse.neighbours(trap, this.bounds)) {
-            const previous = this.explosionMap[explosion.y][explosion.x];
-            if (previous < trapProbability) {
+            const previousProbability = this.explosionMap[explosion.y][explosion.x];
+            if (previousProbability < trapProbability) {
                 this.explosionMap[explosion.y][explosion.x] = trapProbability;
-                this.explosionIds[explosion.y][explosion.x] = explosionId;
             }
+
+            let explosionIds = this.explosionIds[explosion.y][explosion.x];
+            if (!explosionIds) {
+                this.explosionIds[explosion.y][explosion.x] = explosionIds = [];
+            }
+            explosionIds.push(explosionId);
         }
 
         for (const explosion of traverse.neighbours(trap, this.bounds)) {

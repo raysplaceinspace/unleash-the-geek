@@ -1,9 +1,10 @@
 import * as w from '../model';
 import { discount } from './Discount';
-import ExplosionPath from './ExplosionAvoider';
+import ExplosionAvoider from './ExplosionAvoider';
 import Intent from './Intent';
 import PathMap from './PathMap';
 import Vec from '../util/vector';
+import ExplosionMap from './ExplosionMap';
 
 export class RequestIntent extends Intent {
     private constructor(robotId: number, public item: number, value: number) {
@@ -20,7 +21,7 @@ export class RequestIntent extends Intent {
         return new RequestIntent(robot.id, item, value);
     }
 
-    toAction(robot: w.Entity, explosionPath: ExplosionPath, pathMap: PathMap): w.Action {
+    toAction(robot: w.Entity, explosionAvoider: ExplosionAvoider, pathMap: PathMap): w.Action {
         if (robot.pos.x === 0) {
             return {
                 entityId: robot.id,
@@ -28,11 +29,11 @@ export class RequestIntent extends Intent {
                 item: this.item,
             };
         } else {
-            const path = pathMap.pathTo(new Vec(0, robot.pos.y));
+            const target = new Vec(0, robot.pos.y);
             return {
                 entityId: robot.id,
                 type: "move",
-                target: path[0],
+                target: explosionAvoider.claimPath(robot.id, pathMap, target),
             };
         }
     }
