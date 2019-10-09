@@ -1,5 +1,7 @@
 export const DiscountRate = 0.9;
 
+export const ExplosionCost = 100;
+
 export const OreStartX = 8;
 export const OreBeforeStartXPriorBelief = -1;
 export const OreMargin = 1;

@@ -78,7 +78,7 @@ export default class Actor {
     }
 
     choose(): Map<number, w.Action> {
-        // console.error(this.formatMap());
+        console.error(this.formatMap());
 
         const robots = this.world.entities.filter(r => r.type === w.ItemType.RobotTeam0);
 

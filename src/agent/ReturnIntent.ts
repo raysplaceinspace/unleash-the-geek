@@ -2,7 +2,6 @@ import * as collections from '../util/collections';
 import * as traverse from '../util/traverse';
 import * as w from '../model';
 import { discount } from './Discount';
-import Beliefs from './Beliefs';
 import ExplosionAvoider from './ExplosionAvoider';
 import Intent from './Intent';
 import * as Params from './Params';
@@ -36,15 +35,6 @@ export default class ReturnIntent extends Intent {
         const value = returnValue + Params.ReturnNextOreWeight * nextOreValue;
 
         return new ReturnIntent(robot.id, target, value);
-    }
-
-    private static findOreDistance(y: number, beliefs: Beliefs, bounds: traverse.Dimensions) {
-        for (let x = 1; x < bounds.width; ++x) {
-            if (beliefs.oreProbability(x, y) >= 1 && beliefs.trapProbability(x, y) <= 0) {
-                return x;
-            }
-        }
-        return bounds.width;
     }
 
     toAction(robot: w.Entity, explosionAvoider: ExplosionAvoider, pathMap: PathMap): w.Action {

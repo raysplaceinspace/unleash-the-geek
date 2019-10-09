@@ -1,10 +1,9 @@
 import * as collections from '../util/collections';
 import * as traverse from '../util/traverse';
 import * as w from '../model';
+import * as Params from './Params';
 import Vec from '../util/vector';
 import ExplosionMap from './ExplosionMap';
-
-const ExplosionCost = 100;
 
 export default class PathMap {
     public assignments = 0;
@@ -100,7 +99,7 @@ export default class PathMap {
 
             let next = cost + 1;
             if (explosionMap.explodeProbability(n.x, n.y) > 0) {
-                next += ExplosionCost;
+                next += Params.ExplosionCost;
             }
 
             if (next < this.pathMap[n.y][n.x]) {
