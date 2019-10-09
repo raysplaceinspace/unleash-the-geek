@@ -14,4 +14,4 @@ export const OreNeighbourRange = 2; // When successfully dug ore at a cell, incr
 export const OrePayoffPower = 4; // Convert ore probability into a payoff using this power
 
 export const ReturnStraightWeight = 0.1; // When returning, how much weight to put on returning in a straight line
-export const ReturnNextOreWeight = 0.5; // When returning, how much weight to put on the distance to the next dig after returning
+export const ReturnNextOreWeight = 1; // When returning, how much weight to put on the distance to the next dig after returning

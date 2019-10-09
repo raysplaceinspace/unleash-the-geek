@@ -7,6 +7,7 @@ import ExplosionAvoider from './ExplosionAvoider';
 import Intent from './Intent';
 import * as Params from './Params';
 import PathMap from './PathMap';
+import ReturnMap from './ReturnMap';
 import Vec from '../util/vector';
 
 export default class ReturnIntent extends Intent {
@@ -16,26 +17,28 @@ export default class ReturnIntent extends Intent {
         super(robotId, value);
     }
 
-    public static generateBestReturn(robot: w.Entity, beliefs: Beliefs, pathMap: PathMap): ReturnIntent {
+    public static generateBestReturn(robot: w.Entity, returnMap: ReturnMap, pathMap: PathMap): ReturnIntent {
         const intents = collections.map(
             collections.range(pathMap.bounds.height),
-            y => ReturnIntent.evaluate(robot, y, beliefs, pathMap));
+            y => ReturnIntent.evaluate(robot, y, returnMap, pathMap));
         const best = collections.maxBy(intents, x => x.value);
         return best;
     }
 
-    public static evaluate(robot: w.Entity, y: number, beliefs: Beliefs, pathMap: PathMap): ReturnIntent {
-        const payoff = 1;
-
+    public static evaluate(robot: w.Entity, y: number, returnMap: ReturnMap, pathMap: PathMap): ReturnIntent {
         const target = new Vec(0, y);
         const returnTicks = pathMap.cost(target);
         const straightTicks = Vec.distance(target, robot.pos) / w.MovementSpeed;
 
-        const nearestOre = ReturnIntent.findOreDistance(y, beliefs, pathMap.bounds);
-        const nextOreTicks = nearestOre / w.MovementSpeed;
+        const ticks =
+            returnTicks
+            + Params.ReturnStraightWeight * straightTicks
+        const returnValue = discount(1, ticks);
 
-        const ticks = returnTicks + Params.ReturnNextOreWeight * nextOreTicks + Params.ReturnStraightWeight * straightTicks;
-        const value = discount(payoff, ticks);
+        const nextOreValue = returnMap.nextOreValue(y);
+
+        const value = returnValue + Params.ReturnNextOreWeight * nextOreValue;
+
         return new ReturnIntent(robot.id, target, value);
     }
 

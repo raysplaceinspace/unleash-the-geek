@@ -3,6 +3,7 @@ import * as traverse from '../util/traverse';
 import * as w from '../model';
 import Beliefs from './Beliefs';
 import DigIntent from './DigIntent';
+import ExplosionAvoider from './ExplosionAvoider';
 import ExplosionMap from './ExplosionMap';
 import Intent from './Intent';
 import PathMap from './PathMap';
@@ -10,15 +11,16 @@ import * as Params from './Params';
 import PayoffMap from './PayoffMap';
 import RequestIntent from './RequestIntent';
 import ReturnIntent from './ReturnIntent';
+import ReturnMap from './ReturnMap';
 import Vec from '../util/vector';
 import WaitIntent from './WaitIntent';
-import ExplosionAvoider from './ExplosionAvoider';
 
 export default class Actor {
     private totalVisibleOre: number = null;
     private explosionMap: ExplosionMap;
     private pathMaps = new Map<number, PathMap>();
     private payoffMap: PayoffMap;
+    private returnMap: ReturnMap;
 
     private constructor(private world: w.World, private beliefs: Beliefs) {
     }
@@ -66,6 +68,13 @@ export default class Actor {
             this.payoffMap = PayoffMap.generate(this.world, this.beliefs);
         }
         return this.payoffMap;
+    }
+
+    private getOrCreateReturnMap(): ReturnMap {
+        if (!this.returnMap) {
+            this.returnMap = ReturnMap.generate(this.world, this.beliefs);
+        }
+        return this.returnMap;
     }
 
     choose(): Map<number, w.Action> {
@@ -168,7 +177,8 @@ export default class Actor {
         } else {
             const pathMap = this.getOrCreatePathMap(robot.id);
             if (robot.carrying === w.ItemType.Ore && robot.pos.x > 0) {
-                actions.push(ReturnIntent.generateBestReturn(robot, this.beliefs, pathMap));
+                const returnMap = this.getOrCreateReturnMap();
+                actions.push(ReturnIntent.generateBestReturn(robot, returnMap, pathMap));
             } else {
                 if (robot.carrying === w.ItemType.None) {
                     const visibleOre = this.getOrCreateTotalVisibleOre();
