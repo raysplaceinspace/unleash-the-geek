@@ -27,13 +27,9 @@ export default class ReturnIntent extends Intent {
 
     public static evaluate(robot: w.Entity, y: number, returnMap: ReturnMap, pathMap: PathMap): ReturnIntent {
         const target = new Vec(0, y);
-        const returnTicks = pathMap.cost(target);
-        const straightTicks = Vec.distance(target, robot.pos) / w.MovementSpeed;
 
-        const ticks =
-            returnTicks
-            + Params.ReturnStraightWeight * straightTicks
-        const returnValue = discount(1, ticks);
+        const returnTicks = pathMap.cost(target);
+        const returnValue = discount(1, returnTicks);
 
         const nextOreValue = returnMap.nextOreValue(y);
 
