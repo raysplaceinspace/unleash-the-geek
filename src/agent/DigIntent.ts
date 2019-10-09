@@ -91,8 +91,7 @@ export default class DigIntent extends Intent {
     }
 
     private static placementCost(target: Vec, world: w.World): number {
-        const PlacementRange = 5;
-        const outside = PlacementRange + 1;
+        const outside = Params.TrapPlacementRange + 1;
         let closest = outside;
         world.entities.forEach(enemy => {
             if (enemy && enemy.type === w.ItemType.RobotTeam1) {
