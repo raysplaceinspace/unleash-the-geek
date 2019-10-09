@@ -5,6 +5,7 @@ import { discount } from './Discount';
 import Beliefs from './Beliefs';
 import ExplosionAvoider from './ExplosionAvoider';
 import Intent from './Intent';
+import * as Params from './Params';
 import PathMap from './PathMap';
 import Vec from '../util/vector';
 
@@ -33,7 +34,7 @@ export default class ReturnIntent extends Intent {
         const nearestOre = ReturnIntent.findOreDistance(y, beliefs, pathMap.bounds);
         const nextOreTicks = nearestOre / w.MovementSpeed;
 
-        const ticks = returnTicks + 0.1 * nextOreTicks + 0.1 * straightTicks;
+        const ticks = returnTicks + Params.ReturnNextOreWeight * nextOreTicks + Params.ReturnStraightWeight * straightTicks;
         const value = discount(payoff, ticks);
         return new ReturnIntent(robot.id, target, value);
     }
