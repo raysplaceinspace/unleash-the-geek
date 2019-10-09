@@ -154,10 +154,12 @@ export default class Beliefs {
         const result = new Map<string, Vec>();
         for (let y = 0; y < world.height; ++y) {
             for (let x = 0; x < world.width; ++x) {
-                const previousCell = previous.map[y][x];
+                const oldCell = previous.map[y][x];
                 const newCell = world.map[y][x];
 
-                if (newCell.hole && !previousCell.hole) {
+                if (newCell.hole && !oldCell.hole
+                    || newCell.ore !== null && oldCell.ore !== null && newCell.ore < oldCell.ore) {
+
                     result.set(newCell.pos.string(), newCell.pos);
                 }
             }
