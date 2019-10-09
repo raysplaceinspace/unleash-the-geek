@@ -1,3 +1,4 @@
+import * as traverse from '../util/traverse';
 import * as w from '../model';
 import * as Params from './Params';
 import Vec from '../util/vector';
@@ -12,19 +13,26 @@ export default class CellBelief {
     trapBelief = 0;
     trapKnown = 0;
 
-    constructor(pos: Vec) {
+    private constructor(pos: Vec) {
         this.pos = pos;
-
-        this.oreBelief = CellBelief.priorOreBelief(pos.x);
     }
 
-    private static priorOreBelief(x: number): number {
-        if (x < Params.OreStartX) {
-            const proportion = 1 - (x / Params.OreStartX);
-            return proportion * Params.OreBeforeStartXPriorBelief;
-        } else {
-            return 0;
+    public static create(pos: Vec, bounds: traverse.Dimensions) {
+        const result = new CellBelief(pos);
+        result.oreBelief = CellBelief.priorOreBelief(pos, bounds);
+        return result;
+    }
+
+    private static priorOreBelief(pos: Vec, bounds: traverse.Dimensions): number {
+        let prior = 0;
+        if (pos.x < Params.OreStartX) {
+            const proportion = 1 - (pos.x / Params.OreStartX);
+            prior += proportion * Params.OreBeforeStartXPriorBelief;
         }
+        if (traverse.distanceToEdge(pos, bounds) <= Params.OreMargin) {
+            prior += Params.OreMarginPriorBelief;
+        }
+        return prior;
     }
 
     observedSelfDig(success: boolean) {

@@ -4,7 +4,7 @@ import Vec from '../util/vector';
 
 export function testAgent() {
     const world: w.World = w.initialWorld(30, 15);
-    const agent = new Agent(world.width, world.height);
+    const agent = new Agent(world);
 
     const next = w.clone(world);
     next.entities.push({

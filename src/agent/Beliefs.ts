@@ -9,16 +9,16 @@ export default class Beliefs {
     private beliefs: CellBelief[][];
     private enemyBeliefs = new Map<number, EnemyRobotBelief>();
 
-    constructor(width: number, height: number) {
-        this.beliefs = Beliefs.initialBeliefs(width, height);
+    constructor(bounds: traverse.Dimensions) {
+        this.beliefs = Beliefs.initialBeliefs(bounds);
     }
 
-    private static initialBeliefs(width: number, height: number) {
+    private static initialBeliefs(bounds: traverse.Dimensions) {
         const beliefs = new Array<CellBelief[]>();
-        for (let y = 0; y < height; ++y) {
+        for (let y = 0; y < bounds.height; ++y) {
             beliefs[y] = new Array<CellBelief>();
-            for (let x = 0; x < width; ++x) {
-                beliefs[y][x] = new CellBelief(new Vec(x, y));
+            for (let x = 0; x < bounds.width; ++x) {
+                beliefs[y][x] = CellBelief.create(new Vec(x, y), bounds);
             }
         }
         return beliefs;

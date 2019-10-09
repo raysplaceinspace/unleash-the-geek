@@ -1,3 +1,4 @@
+import * as traverse from '../util/traverse'
 import * as w from '../model';
 import Vec from '../util/vector';
 import Actor from './Actor';
@@ -6,8 +7,8 @@ import Beliefs from './Beliefs';
 export default class Agent {
     private beliefs: Beliefs;
 
-    constructor(width: number, height: number) {
-        this.beliefs = new Beliefs(width, height);
+    constructor(dimensions: traverse.Dimensions) {
+        this.beliefs = new Beliefs(dimensions);
     }
 
     choose(previous: w.World, world: w.World): w.Action[] {

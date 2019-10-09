@@ -93,7 +93,7 @@ function main() {
     try {
         // initialisation
         let world = readInitial();
-        const agent = new Agent(world.width, world.height);
+        const agent = new Agent(world);
 
         // game loop
         while (true) {
