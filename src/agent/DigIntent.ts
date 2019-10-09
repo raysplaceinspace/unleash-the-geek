@@ -52,14 +52,14 @@ export default class DigIntent extends Intent {
         const payoff = payoffs.payoff(dig.x, dig.y);
         const destination = collections.minBy(
             traverse.neighbours(dig, pathMap.bounds),
-            n => DigIntent.evaluateDestination(n, pathMap));
-        const moveCost = pathMap.cost(destination);
+            n => DigIntent.calculateReturnTicks(n, pathMap));
+        const moveCost = DigIntent.calculateReturnTicks(destination, pathMap);
 
         const value = discount(payoff / (1 + divisor), moveCost);
         return new DigIntent(robot.id, dig, destination, value);
     }
 
-    private static evaluateDestination(n: Vec, pathMap: PathMap) {
+    private static calculateReturnTicks(n: Vec, pathMap: PathMap) {
         const returnTicks = n.x / w.MovementSpeed;
         return pathMap.cost(n) + returnTicks;
     }
