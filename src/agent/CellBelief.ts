@@ -1,4 +1,5 @@
 import * as w from '../model';
+import * as Params from './Params';
 import Vec from '../util/vector';
 
 export default class CellBelief {
@@ -13,6 +14,17 @@ export default class CellBelief {
 
     constructor(pos: Vec) {
         this.pos = pos;
+
+        this.oreBelief = CellBelief.priorOreBelief(pos.x);
+    }
+
+    private static priorOreBelief(x: number): number {
+        if (x < Params.OreStartX) {
+            const proportion = 1 - (x / Params.OreStartX);
+            return proportion * Params.OreBeforeStartXPriorBelief;
+        } else {
+            return 0;
+        }
     }
 
     observedSelfDig(success: boolean) {
