@@ -9,7 +9,6 @@ import Intent from './Intent';
 import PathMap from './PathMap';
 import * as Params from './Params';
 import PayoffMap from './PayoffMap';
-import RadarMap from './RadarMap';
 import RequestIntent from './RequestIntent';
 import ReturnIntent from './ReturnIntent';
 import ReturnMap from './ReturnMap';
@@ -21,7 +20,6 @@ export default class Actor {
     private explosionMap: ExplosionMap;
     private pathMaps = new Map<number, PathMap>();
     private payoffMap: PayoffMap;
-    private radarMap: RadarMap;
     private returnMap: ReturnMap;
 
     private constructor(private world: w.World, private beliefs: Beliefs) {
@@ -70,13 +68,6 @@ export default class Actor {
             this.payoffMap = PayoffMap.generate(this.world, this.beliefs);
         }
         return this.payoffMap;
-    }
-
-    private getOrCreateRadarMap(): RadarMap {
-        if (!this.radarMap) {
-            this.radarMap = RadarMap.generate(this.world, this.beliefs);
-        }
-        return this.radarMap;
     }
 
     private getOrCreateReturnMap(): ReturnMap {
@@ -195,8 +186,6 @@ export default class Actor {
                 const returnMap = this.getOrCreateReturnMap();
                 actions.push(ReturnIntent.generateBestReturn(robot, returnMap, pathMap));
             } else {
-                const radarMap = this.getOrCreateRadarMap();
-
                 if (robot.carrying === w.ItemType.None) {
                     const explosionMap = this.getOrCreateExplosionMap();
 
@@ -205,8 +194,7 @@ export default class Actor {
 
                     if (this.world.teams[0].radarCooldown === 0
                         && (robot.pos.x === 0 || visibleOre < Params.MinimumVisibleOrePerRobot * numRobots)
-                        && visibleOre < Params.MaximumVisibleOre
-                        && radarMap.coverage < Params.MaximumRadarCoverage) {
+                        && visibleOre < Params.MaximumVisibleOre) {
 
                         actions.push(RequestIntent.evaluate(robot, w.ItemType.Radar, pathMap, explosionMap));
                     }
@@ -216,7 +204,7 @@ export default class Actor {
                 }
 
                 const payoffMap = this.getOrCreatePayoffMap();
-                actions.push(...DigIntent.generateDigActions(robot, this.world, payoffMap, radarMap, pathMap));
+                actions.push(...DigIntent.generateDigActions(robot, this.world, payoffMap, pathMap));
             }
         }
         return actions;

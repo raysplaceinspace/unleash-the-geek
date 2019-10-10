@@ -8,12 +8,10 @@ export const OreMargin = 1;
 export const OreMarginPriorBelief = -1;
 
 export const MinimumVisibleOrePerRobot = 1;
-export const MaximumVisibleOre = 20;
-export const MaximumRadarCoverage = 0.8;
+export const MaximumVisibleOre = 100;
 export const MaximumTraps = 3;
 
-export const RadarPlacementWeight = 0.1;
-export const RadarMarginPayoff = 1;
+export const RadarPlacementWeight = 10;
 
 export const TrapPlacementWeight = 1;
 export const TrapPlacementRange = 5;

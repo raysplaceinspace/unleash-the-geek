@@ -67,8 +67,6 @@ export default class CellBelief {
     }
 
     observedEnemyDig(carryingProbability: number) {
-        this.oreBelief += 0.5;
-
         if (carryingProbability > 0) {
             this.trapBelief += 1;
         }
