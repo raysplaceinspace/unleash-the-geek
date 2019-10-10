@@ -11,6 +11,7 @@ export const MinimumVisibleOrePerRobot = 1;
 export const MaximumVisibleOre = 100;
 export const MaximumTraps = 3;
 
+export const MaximumRadarCoverage = 0.9;
 export const RadarPlacementWeight = 10;
 
 export const TrapPlacementWeight = 1;
