@@ -7,6 +7,7 @@ import Intent from './Intent';
 import * as Params from './Params';
 import PayoffMap from './PayoffMap';
 import PathMap from './PathMap';
+import RadarMap from './RadarMap';
 import Vec from '../util/vector';
 
 function maximumValue(a: DigIntent, b: DigIntent) {
@@ -26,10 +27,10 @@ export default class DigIntent extends Intent {
         super(robotId, value);
     }
 
-    public static generateDigActions(robot: w.Entity, world: w.World, payoffMap: PayoffMap, pathMap: PathMap): DigIntent[] {
+    public static generateDigActions(robot: w.Entity, world: w.World, payoffMap: PayoffMap, radarMap: RadarMap, pathMap: PathMap): DigIntent[] {
         const cellValues = [...collections.map(
             traverse.all(world),
-            dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, pathMap))];
+            dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, radarMap, pathMap))];
         cellValues.sort(maximumValue);
 
         const actionValues =
@@ -38,15 +39,15 @@ export default class DigIntent extends Intent {
         return actionValues;
     }
 
-    public static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap): DigIntent {
-        const radarCost = robot.carrying === w.ItemType.Radar ? DigIntent.radarCost(dig, world) : 0;
+    public static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, radarMap: RadarMap, pathMap: PathMap): DigIntent {
+        const radarPayoff = robot.carrying === w.ItemType.Radar ? DigIntent.radarPayoff(dig, world, radarMap) : 0;
         const placementCost = robot.carrying === w.ItemType.Trap ? DigIntent.placementCost(dig, world) : 0;
 
         const divisor =
             + Params.TrapPlacementWeight + placementCost
-            + Params.RadarPlacementWeight * radarCost
 
-        const payoff = payoffs.payoff(dig.x, dig.y);
+        const payoff = payoffs.payoff(dig.x, dig.y) + radarPayoff;
+
         const destination = collections.minBy(
             traverse.neighbours(dig, pathMap.bounds),
             n => DigIntent.calculateReturnTicks(n, pathMap));
@@ -102,18 +103,11 @@ export default class DigIntent extends Intent {
         return (outside - closest) / outside;
     }
 
-    private static radarCost(target: Vec, world: w.World): number {
-        const outside = 2 * w.RadarRange + 1; // 2x because two radars have overlapping range
-        let closest = Math.min(outside, 2 * traverse.distanceToEdge(target, world)); // edge doesn't have a radar attached, so double it to match scale
-        world.entities.forEach(radar => {
-            if (radar && radar.type === w.ItemType.Radar) {
-                const distance = Vec.l1(radar.pos, target);
-                if (distance < closest) {
-                    closest = distance;
-                }
-            }
-        });
-
-        return (outside - closest) / outside;
+    private static radarPayoff(target: Vec, world: w.World, radarMap: RadarMap): number {
+        let payoff = 0;
+        for (const n of traverse.neighbours(target, world, w.RadarRange)) {
+            payoff += radarMap.payoff(n.x, n.y);
+        }
+        return Params.RadarPlacementWeight * payoff;
     }
 }
