@@ -99,7 +99,7 @@ export default class DigIntent extends Intent {
             }
         });
 
-        return (outside - closest) / outside;
+        return 1 - (outside - closest) / outside;
     }
 
     private static radarCost(target: Vec, world: w.World): number {
