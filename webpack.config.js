@@ -6,6 +6,10 @@ const mode = 'production';
 const runnerConfig = {
   entry: './src/codingame/index.ts',
   mode,
+  optimization: {
+    // We no not want to minimize our code.
+    minimize: false
+  },
   resolve: {
     extensions: [".ts"],
   },
