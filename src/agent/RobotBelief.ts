@@ -11,7 +11,7 @@ export default class EnemyRobotBelief {
         this.carryingBelief = 1;
     }
 
-    observedEnemyDig() {
+    observedDig() {
         this.carryingBelief = -1;
     }
 

@@ -2,15 +2,15 @@ import * as traverse from '../util/traverse';
 import * as w from '../model';
 import Vec from '../util/vector';
 import CellBelief from './CellBelief';
-import EnemyRobotBelief from './EnemyRobotBelief';
+import RobotBelief from './RobotBelief';
 import * as Params from './Params';
 
 export default class Beliefs {
-    private beliefs: CellBelief[][];
-    private enemyBeliefs = new Map<number, EnemyRobotBelief>();
+    private cellBeliefs: CellBelief[][];
+    private robotBeliefs = new Map<number, RobotBelief>();
 
     constructor(bounds: traverse.Dimensions) {
-        this.beliefs = Beliefs.initialBeliefs(bounds);
+        this.cellBeliefs = Beliefs.initialBeliefs(bounds);
     }
 
     private static initialBeliefs(bounds: traverse.Dimensions) {
@@ -25,15 +25,15 @@ export default class Beliefs {
     }
 
     oreProbability(x: number, y: number) {
-        return this.beliefs[y][x].oreProbability();
+        return this.cellBeliefs[y][x].oreProbability();
     }
 
     trapProbability(x: number, y: number) {
-        return this.beliefs[y][x].trapProbability();
+        return this.cellBeliefs[y][x].trapProbability();
     }
 
     carryingProbability(robotId: number) {
-        const belief = this.enemyBeliefs.get(robotId);
+        const belief = this.robotBeliefs.get(robotId);
         return belief ? belief.carryingProbability() : 0;
     }
 
@@ -48,80 +48,119 @@ export default class Beliefs {
         const unexplainedDigs = [...allDigs];
         world.entities.forEach(robot => {
             if (robot.type === w.ItemType.RobotTeam0 && !robot.dead) {
-                const previousRobot = previous.entities.find(r => r.id === robot.id);
-                const previousAction = previous.actions.find(a => a.entityId === robot.id);
-                if (previousAction
-                    && previousAction.type === "dig"
-                    && Vec.l1(previousRobot.pos, robot.pos) === 0 // Stand still to dig
-                    && Vec.l1(previousAction.target, previousRobot.pos) <= w.DigRange) { // Must be next to cell to dig it
-
-                    // Dig has been explained
-                    {
-                        let index = unexplainedDigs.findIndex(x => x.equals(previousAction.target));
-                        if (index !== -1) {
-                            unexplainedDigs.splice(index, 1);
-                        }
-                    }
-
-                    const target = previousAction.target;
-                    const success = previousRobot && previousRobot.carrying !== robot.carrying && robot.carrying === w.ItemType.Ore;
-                    console.error(`Self dig ${robot.id}, success=${success}`);
-
-                    const cellBelief = this.beliefs[target.y][target.x];
-                    cellBelief.observedSelfDig(success);
-                    for (const p of traverse.neighbours(target, world, Params.OreNeighbourRange)) {
-                        this.beliefs[p.y][p.x].observedNeighbour(success, cellBelief);
-                    }
-                }
+                this.observeSelfRobots(robot, previous, world, unexplainedDigs);
             }
         });
 
         world.entities.forEach(robot => {
             if (robot.type === w.ItemType.RobotTeam1 && !robot.dead) {
-                const robotBelief = this.getOrCreateEnemyBelief(robot.id);
-
-                const previousRobot = previous.entities.find(r => r.id === robot.id);
-                if (previousRobot && previousRobot.pos.x === robot.pos.x && previousRobot.pos.y === robot.pos.y) {
-                    let knownDig = new Array<Vec>();
-                    for (const dig of unexplainedDigs) {
-                        if (Vec.l1(dig, previousRobot.pos) <= w.DigRange) {
-                            knownDig.push(dig);
-                        }
-                    }
-
-                    const carryingProbability = robotBelief.carryingProbability();
-                    if (knownDig.length > 0) {
-                        console.error(`Enemy dig ${robot.id}: carrying=${carryingProbability.toFixed(2)} at ${knownDig.map(x => x.string()).join(' ')}`);
-
-                        robotBelief.observedEnemyDig();
-
-                        for (const dig of knownDig) {
-                            this.beliefs[dig.y][dig.x].observedEnemyDig(carryingProbability);
-                        }
-
-                    } else {
-                        let potentialDig = false;
-                        for (const n of traverse.neighbours(previousRobot.pos, world)) {
-                            if (world.map[n.y][n.x].hole) {
-                                potentialDig = true;
-                                this.beliefs[n.y][n.x].observedStillEnemy(carryingProbability);
-                            }
-                        }
-
-                        if (potentialDig) {
-                            console.error(`Enemy still ${robot.id}: carrying=${carryingProbability.toFixed(2)}`);
-                            robotBelief.observedPotentialDig();
-                        }
-                    }
-
-                    if (robot.pos.x === 0) {
-                        // Stood still at headquarters
-                        console.error(`Enemy pickup ${robot.id} possible`);
-                        robotBelief.observedStillAtHeadquarters();
-                    }
-                }
+                this.observeEnemyRobot(robot, previous, world, unexplainedDigs);
             }
         });
+    }
+
+    private observeSelfRobots(robot: w.Entity, previous: w.World, world: w.World, unexplainedDigs: Vec[]) {
+        const previousRobot = previous.entities.find(r => r.id === robot.id);
+        const previousAction = previous.actions.find(a => a.entityId === robot.id);
+
+        this.observeSelfDig(robot, previousAction, previousRobot, world, unexplainedDigs);
+        this.observeSelfPickup(robot, previousRobot);
+    }
+
+    private observeSelfDig(robot: w.Entity, dig: w.Action, previousRobot: w.Entity, world: w.World, unexplainedDigs: Vec[]) {
+        if (!(dig
+            && dig.type === "dig"
+            && previousRobot.pos.equals(robot.pos) // Stand still to dig
+            && Vec.l1(dig.target, previousRobot.pos) <= w.DigRange)) { // Must be next to cell to dig it
+
+            return;
+        }
+
+        // Dig has been explained
+        {
+            let index = unexplainedDigs.findIndex(x => x.equals(dig.target));
+            if (index !== -1) {
+                unexplainedDigs.splice(index, 1);
+            }
+        }
+
+        // Update cells
+        const target = dig.target;
+        const success = previousRobot && previousRobot.carrying !== robot.carrying && robot.carrying === w.ItemType.Ore;
+        console.error(`Self dig ${robot.id}, success=${success}`);
+
+        const cellBelief = this.cellBeliefs[target.y][target.x];
+        cellBelief.observedSelfDig(success);
+        for (const p of traverse.neighbours(target, world, Params.OreNeighbourRange)) {
+            this.cellBeliefs[p.y][p.x].observedNeighbour(success, cellBelief);
+        }
+
+        // Update carrying belief
+        const robotBelief = this.getOrCreateRobotBelief(robot.id);
+        robotBelief.observedDig();
+    }
+
+    private observeSelfPickup(robot: w.Entity, previousRobot: w.Entity) {
+        if (robot.pos.x === 0 && previousRobot && previousRobot.pos.equals(robot.pos)) {
+            // Still in headquarters -> belief
+            const robotBelief = this.getOrCreateRobotBelief(robot.id);
+            robotBelief.observedStillAtHeadquarters();
+        }
+    }
+
+    private observeEnemyRobot(robot: w.Entity, previous: w.World, world: w.World, unexplainedDigs: Vec[]) {
+        const previousRobot = previous.entities.find(r => r.id === robot.id);
+        this.observeEnemyDig(robot, previousRobot, world, unexplainedDigs);
+        this.observeEnemyPickup(robot, previousRobot);
+    }
+
+    private observeEnemyDig(robot: w.Entity, previousRobot: w.Entity, world: w.World, unexplainedDigs: Vec[]) {
+        if (!(previousRobot && previousRobot.pos.x === robot.pos.x && previousRobot.pos.y === robot.pos.y)) {
+            return;
+        }
+
+        const robotBelief = this.getOrCreateRobotBelief(robot.id);
+
+        let knownDig = new Array<Vec>();
+        for (const dig of unexplainedDigs) {
+            if (Vec.l1(dig, previousRobot.pos) <= w.DigRange) {
+                knownDig.push(dig);
+            }
+        }
+
+        const carryingProbability = robotBelief.carryingProbability();
+        if (knownDig.length > 0) {
+            console.error(`Enemy dig ${robot.id}: carrying=${carryingProbability.toFixed(2)} at ${knownDig.map(x => x.string()).join(' ')}`);
+
+            robotBelief.observedDig();
+
+            for (const dig of knownDig) {
+                this.cellBeliefs[dig.y][dig.x].observedEnemyDig(carryingProbability);
+            }
+
+        } else {
+            let potentialDig = false;
+            for (const n of traverse.neighbours(previousRobot.pos, world)) {
+                if (world.map[n.y][n.x].hole) {
+                    potentialDig = true;
+                    this.cellBeliefs[n.y][n.x].observedStillEnemy(carryingProbability);
+                }
+            }
+
+            if (potentialDig) {
+                console.error(`Enemy still ${robot.id}: carrying=${carryingProbability.toFixed(2)}`);
+                robotBelief.observedPotentialDig();
+            }
+        }
+    }
+
+    private observeEnemyPickup(robot: w.Entity, previousRobot: w.Entity) {
+        if (robot.pos.x === 0 && previousRobot && previousRobot.pos.x === robot.pos.x && previousRobot.pos.y === robot.pos.y) {
+            const robotBelief = this.getOrCreateRobotBelief(robot.id);
+            // Stood still at headquarters
+            console.error(`Enemy pickup ${robot.id} possible`);
+            robotBelief.observedStillAtHeadquarters();
+        }
     }
 
     private updateBeliefsFromMap(world: w.World) {
@@ -131,7 +170,7 @@ export default class Beliefs {
                 if (typeof cell.ore === 'number') {
                     const success = cell.ore > 0;
 
-                    const cellBelief = this.beliefs[y][x];
+                    const cellBelief = this.cellBeliefs[y][x];
                     cellBelief.observedOre(success);
                 }
             }
@@ -141,19 +180,19 @@ export default class Beliefs {
     private updateBeliefsFromEntities(previous: w.World, world: w.World) {
         world.entities.forEach(entity => {
             if (entity.type === w.ItemType.Trap) {
-                const cellBelief = this.beliefs[entity.pos.y][entity.pos.x];
+                const cellBelief = this.cellBeliefs[entity.pos.y][entity.pos.x];
                 cellBelief.observedTrap();
             }
         });
     }
 
-    private getOrCreateEnemyBelief(robotId: number) {
-        let enemyBelief = this.enemyBeliefs.get(robotId)
-        if (!enemyBelief) {
-            enemyBelief = new EnemyRobotBelief(robotId);
-            this.enemyBeliefs.set(robotId, enemyBelief);
+    private getOrCreateRobotBelief(robotId: number) {
+        let robotBelief = this.robotBeliefs.get(robotId)
+        if (!robotBelief) {
+            robotBelief = new RobotBelief(robotId);
+            this.robotBeliefs.set(robotId, robotBelief);
         }
-        return enemyBelief;
+        return robotBelief;
     }
 
     private findDigs(previous: w.World, world: w.World): Vec[] {

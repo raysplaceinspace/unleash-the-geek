@@ -189,36 +189,44 @@ export default class Actor {
         const actions = new Array<Intent>();
         if (robot.dead) {
             actions.push(this.generateNoop(robot.id));
+        } else if (robot.carrying === w.ItemType.Ore && robot.pos.x > 0) {
+            this.evaluateReturn(robot, actions);
         } else {
-            const pathMap = this.getOrCreatePathMap(robot.id);
-            if (robot.carrying === w.ItemType.Ore && robot.pos.x > 0) {
-                const returnMap = this.getOrCreateReturnMap();
-                actions.push(ReturnIntent.generateBestReturn(robot, returnMap, pathMap));
-            } else {
-                const radarMap = this.getOrCreateRadarMap();
-                if (robot.carrying === w.ItemType.None) {
-                    const explosionMap = this.getOrCreateExplosionMap();
-
-                    const visibleOre = this.getOrCreateTotalVisibleOre();
-                    const numRobots = this.world.entities.filter(r => r.type === w.ItemType.RobotTeam0).length;
-
-                    if (this.world.teams[0].radarCooldown === 0
-                        && (robot.pos.x === 0 || visibleOre < Params.MinimumVisibleOrePerRobot * numRobots)
-                        && visibleOre < Params.MaximumVisibleOre
-                        && radarMap.coverage < Params.MaximumRadarCoverage) {
-
-                        actions.push(RequestIntent.evaluate(robot, w.ItemType.Radar, pathMap, explosionMap));
-                    }
-                    if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.activeTrapCount() < Params.MaximumTraps) {
-                        actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, pathMap, explosionMap));
-                    }
-                }
-
-                const payoffMap = this.getOrCreatePayoffMap();
-                actions.push(...DigIntent.generateDigActions(robot, this.world, payoffMap, pathMap));
-            }
+            this.evaluatePickup(robot, actions);
         }
         return actions;
+    }
+
+    private evaluateReturn(robot: w.Entity, actions: Intent[]) {
+        const pathMap = this.getOrCreatePathMap(robot.id);
+        const returnMap = this.getOrCreateReturnMap();
+        actions.push(ReturnIntent.generateBestReturn(robot, returnMap, pathMap));
+    }
+
+    private evaluatePickup(robot: w.Entity, actions: Intent[]) {
+        const pathMap = this.getOrCreatePathMap(robot.id);
+        const radarMap = this.getOrCreateRadarMap();
+        if (robot.carrying === w.ItemType.None) {
+            const explosionMap = this.getOrCreateExplosionMap();
+
+            const visibleOre = this.getOrCreateTotalVisibleOre();
+            const numRobots = this.world.entities.filter(r => r.type === w.ItemType.RobotTeam0).length;
+
+            if (this.world.teams[0].radarCooldown === 0
+                && (robot.pos.x === 0 || visibleOre < Params.MinimumVisibleOrePerRobot * numRobots)
+                && visibleOre < Params.MaximumVisibleOre
+                && radarMap.coverage < Params.MaximumRadarCoverage) {
+
+                actions.push(RequestIntent.evaluate(robot, w.ItemType.Radar, pathMap, explosionMap));
+            }
+            if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.activeTrapCount() < Params.MaximumTraps) {
+                actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, pathMap, explosionMap));
+            }
+        }
+
+        const payoffMap = this.getOrCreatePayoffMap();
+        actions.push(...DigIntent.generateDigActions(robot, this.world, payoffMap, pathMap));
+
     }
 
     private generateNoop(robotId: number): WaitIntent {
