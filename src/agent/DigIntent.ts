@@ -32,10 +32,7 @@ export default class DigIntent extends Intent {
             dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, pathMap))];
         cellValues.sort(maximumValue);
 
-        const actionValues =
-            cellValues
-            .slice(0, world.numRobots)
-        return actionValues;
+        return cellValues;
     }
 
     public static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap): DigIntent {
