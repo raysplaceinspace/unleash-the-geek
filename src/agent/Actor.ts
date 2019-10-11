@@ -16,6 +16,7 @@ import ReturnIntent from './ReturnIntent';
 import ReturnMap from './ReturnMap';
 import Vec from '../util/vector';
 import WaitIntent from './WaitIntent';
+import BluffScheduler from './BluffScheduler';
 
 export default class Actor {
     private totalVisibleOre: number = null;
@@ -25,11 +26,11 @@ export default class Actor {
     private radarMap: RadarMap;
     private returnMap: ReturnMap;
 
-    private constructor(private world: w.World, private beliefs: Beliefs) {
+    private constructor(private world: w.World, private beliefs: Beliefs, private bluffScheduler: BluffScheduler) {
     }
 
-    public static create(world: w.World, beliefs: Beliefs) {
-        return new Actor(world, beliefs);
+    public static create(world: w.World, beliefs: Beliefs, bluffScheduler: BluffScheduler) {
+        return new Actor(world, beliefs, bluffScheduler);
     }
 
 
@@ -92,14 +93,11 @@ export default class Actor {
 
         const potentialActions = this.evaluateChoices(robots);
 
-        let numDeduplications = 0;
         for (let attempt = 0; attempt < this.world.numRobots; ++attempt) {
             const changed = this.subsumeActions(robots, potentialActions);
             if (!changed) {
                 break;
             }
-
-            ++numDeduplications;
         }
 
         const result = new Map<number, w.Action>();
@@ -110,6 +108,11 @@ export default class Actor {
 
             const pathMap = this.getOrCreatePathMap(robot.id);
             result.set(robot.id, intent.toAction(robot, explosionAvoider, pathMap));
+
+            // Bluff was chosen
+            if (intent instanceof BluffIntent) {
+                this.bluffScheduler.bluff(this.world.tick);
+            }
         }
 
         // console.error(this.formatMap(explosionAvoider));
@@ -222,7 +225,7 @@ export default class Actor {
             if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.activeTrapCount() < Params.MaximumTraps) {
                 actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, pathMap, explosionMap));
             }
-            if (robot.pos.x === 0 && this.beliefs.carryingProbability(robot.id) <= 0) {
+            if (robot.pos.x === 0 && this.beliefs.carryingProbability(robot.id) <= 0 && this.bluffScheduler.bluffReady(this.world.tick)) {
                 actions.push(BluffIntent.evaluate(robot, pathMap, explosionMap));
             }
         }

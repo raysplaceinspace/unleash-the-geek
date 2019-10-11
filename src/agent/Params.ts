@@ -11,6 +11,8 @@ export const MinimumVisibleOrePerRobot = 1;
 export const MaximumVisibleOre = 100;
 export const MaximumTraps = 0;
 
+export const BluffInterval = 5;
+
 export const MaximumRadarCoverage = 0.9;
 export const RadarPlacementWeight = 10;
 
