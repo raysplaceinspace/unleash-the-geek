@@ -35,7 +35,7 @@ export default class DigIntent extends Intent {
         return cellValues;
     }
 
-    public static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap): DigIntent {
+    private static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap): DigIntent {
         const radarCost = robot.carrying === w.ItemType.Radar ? DigIntent.radarCost(dig, world) : 0;
         const placementCost = robot.carrying === w.ItemType.Trap ? DigIntent.placementCost(dig, world) : 0;
 

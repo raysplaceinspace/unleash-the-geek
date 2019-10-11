@@ -8,20 +8,20 @@ import PathMap from './PathMap';
 import Vec from '../util/vector';
 import ExplosionMap from './ExplosionMap';
 
-export class RequestIntent extends Intent {
-    private constructor(robotId: number, public target: Vec, public item: number, value: number) {
+export default class BluffIntent extends Intent {
+    private constructor(robotId: number, public target: Vec, value: number) {
         super(robotId, value);
     }
 
-    public static evaluate(robot: w.Entity, item: number, pathMap: PathMap, explosionMap: ExplosionMap) {
+    public static evaluate(robot: w.Entity, pathMap: PathMap, explosionMap: ExplosionMap) {
         const intents = collections.map(
             collections.range(pathMap.bounds.height),
-            y => RequestIntent.evaluateAt(robot, y, item, pathMap, explosionMap));
+            y => BluffIntent.evaluateAt(robot, y, pathMap, explosionMap));
         const best = collections.maxBy(intents, x => x.value);
         return best;
     }
 
-    private static evaluateAt(robot: w.Entity, y: number, item: number, pathMap: PathMap, explosionMap: ExplosionMap): RequestIntent {
+    private static evaluateAt(robot: w.Entity, y: number, pathMap: PathMap, explosionMap: ExplosionMap): BluffIntent {
         const payoff = 1;
 
         const target = new Vec(0, y);
@@ -31,15 +31,15 @@ export class RequestIntent extends Intent {
         }
 
         const value = discount(payoff, returnTicks);
-        return new RequestIntent(robot.id, target, item, value);
+        return new BluffIntent(robot.id, target, value);
     }
 
     toAction(robot: w.Entity, explosionAvoider: ExplosionAvoider, pathMap: PathMap): w.Action {
         if (robot.pos.equals(this.target)) {
             return {
                 entityId: robot.id,
-                type: "request",
-                item: this.item,
+                type: "move",
+                target: this.target,
             };
         } else {
             return {
@@ -51,12 +51,10 @@ export class RequestIntent extends Intent {
     }
 
     duplicates(other: Intent): boolean {
-        if (other instanceof RequestIntent) {
-            return this.item === other.item;
+        if (other instanceof BluffIntent) {
+            return true;
         } else {
             return super.duplicates(other);
         }
     }
 }
-
-export default RequestIntent;

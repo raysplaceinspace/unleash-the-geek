@@ -2,6 +2,7 @@ import * as collections from '../util/collections';
 import * as traverse from '../util/traverse';
 import * as w from '../model';
 import Beliefs from './Beliefs';
+import BluffIntent from './BluffIntent';
 import DigIntent from './DigIntent';
 import ExplosionAvoider from './ExplosionAvoider';
 import ExplosionMap from './ExplosionMap';
@@ -185,7 +186,6 @@ export default class Actor {
 
     // Return actions, sorted best to worst
     private evaluateRobotChoices(robot: w.Entity): Intent[] {
-        const start = Date.now();
         const actions = new Array<Intent>();
         if (robot.dead) {
             actions.push(this.generateNoop(robot.id));
@@ -221,6 +221,9 @@ export default class Actor {
             }
             if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.activeTrapCount() < Params.MaximumTraps) {
                 actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, pathMap, explosionMap));
+            }
+            if (robot.pos.x === 0 && this.beliefs.carryingProbability(robot.id) <= 0) {
+                actions.push(BluffIntent.evaluate(robot, pathMap, explosionMap));
             }
         }
 

@@ -24,7 +24,7 @@ export default class ReturnIntent extends Intent {
         return best;
     }
 
-    public static evaluate(robot: w.Entity, y: number, returnMap: ReturnMap, pathMap: PathMap): ReturnIntent {
+    private static evaluate(robot: w.Entity, y: number, returnMap: ReturnMap, pathMap: PathMap): ReturnIntent {
         const target = new Vec(0, y);
 
         const returnTicks = pathMap.cost(target);
