@@ -204,9 +204,11 @@ export default class Actor {
     }
 
     private evaluateReturn(robot: w.Entity, actions: Intent[]) {
+        const avoid = Params.AlwaysAvoidOnReturn; // this.world.entities.filter(r => r.type === w.ItemType.RobotTeam0 && r.dead).length > 0; // After 1 robot killed, always avoid on returning
+
         const pathMap = this.getOrCreatePathMap(robot.id);
         const returnMap = this.getOrCreateReturnMap();
-        actions.push(ReturnIntent.generateBestReturn(robot, returnMap, pathMap));
+        actions.push(ReturnIntent.generateBestReturn(robot, avoid, returnMap, pathMap));
     }
     
     private evaluatePickup(robot: w.Entity, actions: Intent[]) {

@@ -19,7 +19,12 @@ export default class ExplosionAvoider {
         return [];
     }
 
-    public claimPath(robotId: number, pathMap: PathMap, target: Vec): Vec {
+    public claimPath(robotId: number, pathMap: PathMap, target: Vec, alwaysAvoid: boolean = true): Vec {
+        if (alwaysAvoid) {
+            return this.avoidancePath(robotId, pathMap, target);
+        }
+
+        // Allow one robot to take the direct path since it would be a 1-for-1 trade and no one would be worse off
         const direct = collections.minBy(
             traverse.neighbours(pathMap.from, this.bounds, w.MovementSpeed),
             n => Vec.distance(target, n));
