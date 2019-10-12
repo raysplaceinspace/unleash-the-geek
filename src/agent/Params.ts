@@ -4,7 +4,7 @@ export const ExplosionCost = 100;
 
 export const OreStartX = 4;
 export const OreBeforeStartXPriorBelief = 0;
-export const OreMargin = 1;
+export const OreMargin = 5;
 export const OreMarginPriorBelief = -1;
 
 export const MinimumVisibleOrePerRobot = 1;

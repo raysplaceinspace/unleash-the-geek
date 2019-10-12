@@ -32,7 +32,8 @@ export default class CellBelief {
             prior += proportion * Params.OreBeforeStartXPriorBelief;
         }
         if (traverse.distanceToEdge(pos, bounds) <= Params.OreMargin) {
-            prior += Params.OreMarginPriorBelief;
+            const proportion = Math.max(0, 1 - (traverse.distanceToEdge(pos, bounds) / Params.OreMargin));
+            prior += proportion * Params.OreMarginPriorBelief;
         }
         return prior;
     }
