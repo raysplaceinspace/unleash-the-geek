@@ -16,7 +16,7 @@ export default class EnemyRobotBelief {
     }
 
     observedPotentialDig() {
-        this.carryingBelief -= 0.1;
+        this.carryingBelief -= 0.01;
     }
 
     carryingProbability() {
