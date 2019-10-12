@@ -13,6 +13,8 @@ export default class CellBelief {
     trapBelief = 0;
     trapKnown = 0;
 
+    appearsTrapped = false;
+
     private constructor(pos: Vec) {
         this.pos = pos;
     }
@@ -35,7 +37,7 @@ export default class CellBelief {
         return prior;
     }
 
-    observedSelfDig(success: boolean) {
+    observedSelfDig(success: boolean, appearsTrapped: boolean) {
         if (success) {
             this.oreBelief = 1;
             this.oreKnown = 1;
@@ -44,6 +46,8 @@ export default class CellBelief {
             this.oreBelief = -1;
             this.oreKnown = -1;
         }
+
+        this.appearsTrapped = this.appearsTrapped || appearsTrapped;
     }
 
     observedNeighbour(success: boolean, neighbour: CellBelief) {

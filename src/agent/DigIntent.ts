@@ -2,6 +2,7 @@ import * as collections from '../util/collections';
 import * as traverse from '../util/traverse';
 import * as w from '../model';
 import { discount } from './Discount';
+import Beliefs from './Beliefs';
 import ExplosionAvoider from './ExplosionAvoider';
 import Intent from './Intent';
 import * as Params from './Params';
@@ -26,16 +27,16 @@ export default class DigIntent extends Intent {
         super(robotId, value);
     }
 
-    public static generateDigActions(robot: w.Entity, world: w.World, payoffMap: PayoffMap, pathMap: PathMap): DigIntent[] {
+    public static generateDigActions(robot: w.Entity, world: w.World, payoffMap: PayoffMap, pathMap: PathMap, beliefs: Beliefs): DigIntent[] {
         const cellValues = [...collections.map(
             traverse.all(world),
-            dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, pathMap))];
+            dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, pathMap, beliefs))];
         cellValues.sort(maximumValue);
 
         return cellValues;
     }
 
-    private static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap): DigIntent {
+    private static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap, beliefs: Beliefs): DigIntent {
         const radarCost = robot.carrying === w.ItemType.Radar ? DigIntent.radarCost(dig, world) : 0;
         const placementCost = robot.carrying === w.ItemType.Trap ? DigIntent.placementCost(dig, world) : 0;
 
@@ -47,10 +48,44 @@ export default class DigIntent extends Intent {
         const destination = collections.minBy(
             traverse.neighbours(dig, pathMap.bounds),
             n => DigIntent.calculateReturnTicks(n, pathMap));
-        const moveCost = DigIntent.calculateReturnTicks(destination, pathMap);
+        const moveTicks = DigIntent.calculateReturnTicks(destination, pathMap);
 
-        const value = discount(payoff / (1 + divisor), moveCost);
+        const initialValue = discount(payoff / (1 + divisor), moveTicks);
+
+        let value = initialValue;
+        value += DigIntent.evaluateFutureDigs(robot, dig, world, beliefs, moveTicks);
+
         return new DigIntent(robot.id, dig, destination, value);
+    }
+
+    private static evaluateFutureDigs(robot: w.Entity, dig: Vec, world: w.World, beliefs: Beliefs, initialTicks: number): number {
+        // The first one to touch an ore while carrying seals the cell because the enemy won't risk setting off a trap set there
+        const appearsCarrying = beliefs.carryingProbability(robot.id) > 0;
+        if (!(appearsCarrying && !beliefs.appearsTrapped(dig.x, dig.y))) {
+            return 0;
+        }
+
+        const cell = world.map[dig.y][dig.x];
+        if (typeof cell.ore !== 'number') {
+            return 0;
+        }
+
+        const numFutureDigs = cell.ore - 1; // -1 because the first ore is the current dig
+        if (numFutureDigs <= 0) {
+            return 0;
+        }
+
+        const digAndReturnTicks = 2 * Math.ceil(dig.x / w.MovementSpeed);
+
+        let extraValue = 0;
+
+        let tick = initialTicks;
+        for (let i = 0; i < numFutureDigs; ++i) {
+            tick += digAndReturnTicks;
+            extraValue += discount(1, tick);
+        }
+
+        return extraValue;
     }
 
     private static calculateReturnTicks(n: Vec, pathMap: PathMap) {

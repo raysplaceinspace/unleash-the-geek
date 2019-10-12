@@ -37,6 +37,10 @@ export default class Beliefs {
         return belief ? belief.carryingProbability() : 0;
     }
 
+    appearsTrapped(x: number, y: number) {
+        return this.cellBeliefs[y][x].appearsTrapped;
+    }
+
     update(previous: w.World, world: w.World) {
         this.updateBeliefsFromDigs(previous, world);
         this.updateBeliefsFromMap(world);
@@ -84,24 +88,29 @@ export default class Beliefs {
             }
         }
 
-        // Update cells
+        // Update beliefs
         const target = dig.target;
-        const success = previousRobot && previousRobot.carrying !== robot.carrying && robot.carrying === w.ItemType.Ore;
-        console.error(`Self dig ${robot.id}, success=${success}`);
-
         const cellBelief = this.cellBeliefs[target.y][target.x];
-        cellBelief.observedSelfDig(success);
+        const robotBelief = this.getOrCreateRobotBelief(robot.id);
+
+        // Update cells
+        const success = previousRobot && previousRobot.carrying !== robot.carrying && robot.carrying === w.ItemType.Ore;
+        const appearsTrapped = robotBelief.carryingProbability() > 0;
+        console.error(`Self dig ${robot.id}, success=${success}, appearsTrapped=${appearsTrapped}`);
+
+        cellBelief.observedSelfDig(success, appearsTrapped);
         for (const p of traverse.neighbours(target, world, Params.OreNeighbourRange)) {
             this.cellBeliefs[p.y][p.x].observedNeighbour(success, cellBelief);
         }
 
         // Update carrying belief
-        const robotBelief = this.getOrCreateRobotBelief(robot.id);
         robotBelief.observedDig();
     }
 
     private observeSelfPickup(robot: w.Entity, previousRobot: w.Entity) {
         if (robot.pos.x === 0 && previousRobot && previousRobot.pos.equals(robot.pos)) {
+            console.error(`Potential self pickup ${robot.id}`);
+
             // Still in headquarters -> belief
             const robotBelief = this.getOrCreateRobotBelief(robot.id);
             robotBelief.observedStillAtHeadquarters();
