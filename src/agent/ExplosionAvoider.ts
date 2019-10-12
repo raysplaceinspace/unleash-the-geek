@@ -29,9 +29,13 @@ export default class ExplosionAvoider {
             return direct;
         } else {
             console.error(`Robot ${robotId} avoiding ${direct.string()}`);
-            const path = pathMap.pathTo(target);
-            return path[0];
+            return this.avoidancePath(robotId, pathMap, target);
         }
+    }
+
+    public avoidancePath(robotId: number, pathMap: PathMap, target: Vec): Vec {
+        const path = pathMap.pathTo(target);
+        return path[0];
     }
 
     // Return whether this robot can go to this location
