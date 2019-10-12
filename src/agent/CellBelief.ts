@@ -50,17 +50,17 @@ export default class CellBelief {
         this.appearsTrapped = this.appearsTrapped || appearsTrapped;
     }
 
-    observedNeighbour(success: boolean, neighbour: CellBelief) {
+    observedSelfDigNeighbour(success: boolean, neighbour: CellBelief) {
         const distance = Vec.l1(this.pos, neighbour.pos);
         const modifier = Math.exp(-distance);
 
         if (success) {
-            this.oreBelief += 10 * modifier;
+            this.oreBelief += Params.OreNeighbourBelief * modifier;
         } else if (neighbour.hadOre) {
             // The only reason we're unsuccessful is because we always dig until the neighbour doesn't have ore anymore,
             // not because there is possibly no ore here
         } else {
-            this.oreBelief -= 10 * modifier;
+            this.oreBelief -= Params.OreNeighbourBelief * modifier;
         }
     }
 
@@ -74,6 +74,13 @@ export default class CellBelief {
         if (carryingProbability > 0) {
             this.trapBelief += 1;
         }
+    }
+
+    observedEnemyDigNeighbour(digTarget: Vec) {
+        const distance = Vec.l1(this.pos, digTarget);
+        const modifier = Math.exp(-distance);
+
+        this.oreBelief += Params.EnemyOreNeighbourBelief * modifier;
     }
 
     observedOre(success: boolean) {

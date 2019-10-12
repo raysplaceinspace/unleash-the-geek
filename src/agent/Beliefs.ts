@@ -100,7 +100,7 @@ export default class Beliefs {
 
         cellBelief.observedSelfDig(success, appearsTrapped);
         for (const p of traverse.neighbours(target, world, Params.OreNeighbourRange)) {
-            this.cellBeliefs[p.y][p.x].observedNeighbour(success, cellBelief);
+            this.cellBeliefs[p.y][p.x].observedSelfDigNeighbour(success, cellBelief);
         }
 
         // Update carrying belief
@@ -159,6 +159,12 @@ export default class Beliefs {
             if (potentialDig) {
                 console.error(`Enemy still ${robot.id}: carrying=${carryingProbability.toFixed(2)}`);
                 robotBelief.observedPotentialDig();
+            }
+        }
+
+        for (const n of traverse.neighbours(robot.pos, world, Params.OreNeighbourRange)) {
+            if (world.map[n.y][n.x].hole) {
+                this.cellBeliefs[n.y][n.x].observedEnemyDigNeighbour(robot.pos);
             }
         }
     }
