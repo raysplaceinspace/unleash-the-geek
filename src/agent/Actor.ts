@@ -227,10 +227,10 @@ export default class Actor {
             && visibleOre < Params.MaximumVisibleOre
             && radarMap.coverage < Params.MaximumRadarCoverage) {
 
-            actions.push(RequestIntent.evaluate(robot, w.ItemType.Radar, pathMap, explosionMap));
+            actions.push(RequestIntent.evaluate(robot, w.ItemType.Radar, radarMap, pathMap, explosionMap));
         }
         if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.activeTrapCount() < Params.MaximumTraps) {
-            actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, pathMap, explosionMap));
+            actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, radarMap, pathMap, explosionMap));
         }
         if (robot.pos.x === 0 && this.beliefs.carryingProbability(robot.id) <= 0 && this.bluffScheduler.bluffReady(this.world.tick)) {
             actions.push(BluffIntent.evaluate(robot, pathMap, explosionMap));

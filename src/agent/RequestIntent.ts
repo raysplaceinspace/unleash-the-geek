@@ -7,22 +7,23 @@ import * as Params from './Params';
 import PathMap from './PathMap';
 import Vec from '../util/vector';
 import ExplosionMap from './ExplosionMap';
+import RadarMap from './RadarMap';
 
 export class RequestIntent extends Intent {
     private constructor(robotId: number, public target: Vec, public item: number, value: number) {
         super(robotId, value);
     }
 
-    public static evaluate(robot: w.Entity, item: number, pathMap: PathMap, explosionMap: ExplosionMap) {
+    public static evaluate(robot: w.Entity, item: number, radarMap: RadarMap, pathMap: PathMap, explosionMap: ExplosionMap) {
         const intents = collections.map(
             collections.range(pathMap.bounds.height),
-            y => RequestIntent.evaluateAt(robot, y, item, pathMap, explosionMap));
+            y => RequestIntent.evaluateAt(robot, y, item, radarMap, pathMap, explosionMap));
         const best = collections.maxBy(intents, x => x.value);
         return best;
     }
 
-    private static evaluateAt(robot: w.Entity, y: number, item: number, pathMap: PathMap, explosionMap: ExplosionMap): RequestIntent {
-        const payoff = 1;
+    private static evaluateAt(robot: w.Entity, y: number, item: number, radarMap: RadarMap, pathMap: PathMap, explosionMap: ExplosionMap): RequestIntent {
+        const payoff = radarMap.reqeustPayoff(y);
 
         const target = new Vec(0, y);
         let returnTicks = pathMap.cost(target);

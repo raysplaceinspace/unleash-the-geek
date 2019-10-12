@@ -4,6 +4,14 @@ export function* range(count: number): Iterable<number> {
     }
 }
 
+export function create1D<T>(length: number, initial: T): T[] {
+    const array = new Array<T>();
+    for (let i = 0; i < length; ++i) {
+        array[i] = initial;
+    }
+    return array;
+}
+
 export function create2D<T>(width: number, height: number, initial: T): T[][] {
     const array = new Array<T[]>();
     for (let y = 0; y < height; ++y) {

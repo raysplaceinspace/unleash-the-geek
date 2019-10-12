@@ -11,11 +11,11 @@ export const MinimumVisibleOrePerRobot = 1;
 export const MaximumVisibleOre = 100;
 export const MaximumTraps = 0;
 
-export const BluffInterval = 1;
-export const AllowMultipleBluffsPerTick = true;
+export const BluffInterval = 5;
+export const AllowMultipleBluffsPerTick = false;
 
 export const MaximumRadarCoverage = 0.9;
-export const RadarPlacementWeight = 1;
+export const RadarPlacementWeight = 10;
 
 export const TrapPlacementWeight = 1;
 export const TrapPlacementRange = 5;
