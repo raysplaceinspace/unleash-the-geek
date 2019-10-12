@@ -21,6 +21,6 @@ export const TrapPlacementRange = 5;
 
 export const OreNeighbourRange = 2; // When successfully dug ore at a cell, increase probability of ore in neighbouring cells within this range
 
-export const OrePayoffPower = 2; // Convert ore probability into a payoff using this power
+export const OrePayoffPower = 8; // Convert ore probability into a payoff using this power
 
 export const ReturnNextOreWeight = 1; // When returning, how much weight to put on the distance to the next dig after returning
