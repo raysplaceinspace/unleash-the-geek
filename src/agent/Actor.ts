@@ -3,6 +3,7 @@ import * as traverse from '../util/traverse';
 import * as w from '../model';
 import Beliefs from './Beliefs';
 import BluffIntent from './BluffIntent';
+import BluffScheduler from './BluffScheduler';
 import DigIntent from './DigIntent';
 import ExplosionAvoider from './ExplosionAvoider';
 import ExplosionMap from './ExplosionMap';
@@ -14,9 +15,10 @@ import RadarMap from './RadarMap';
 import RequestIntent from './RequestIntent';
 import ReturnIntent from './ReturnIntent';
 import ReturnMap from './ReturnMap';
+import SquirrelMap from './SquirrelMap';
 import Vec from '../util/vector';
 import WaitIntent from './WaitIntent';
-import BluffScheduler from './BluffScheduler';
+import SquirrelIntent from './SquirrelIntent';
 
 export default class Actor {
     private totalVisibleOre: number = null;
@@ -25,6 +27,7 @@ export default class Actor {
     private payoffMap: PayoffMap;
     private radarMap: RadarMap;
     private returnMap: ReturnMap;
+    private squirrelMap: SquirrelMap;
 
     private constructor(private world: w.World, private beliefs: Beliefs, private bluffScheduler: BluffScheduler) {
     }
@@ -86,6 +89,13 @@ export default class Actor {
             this.returnMap = ReturnMap.generate(this.world, this.beliefs);
         }
         return this.returnMap;
+    }
+
+    private getOrCreateSquirrelMap(): SquirrelMap {
+        if (!this.squirrelMap) {
+            this.squirrelMap = SquirrelMap.generate(this.world, this.beliefs);
+        }
+        return this.squirrelMap;
     }
 
     choose(): Map<number, w.Action> {
@@ -208,6 +218,9 @@ export default class Actor {
 
         const pathMap = this.getOrCreatePathMap(robot.id);
         const returnMap = this.getOrCreateReturnMap();
+        const squirrelMap = this.getOrCreateSquirrelMap();
+
+        actions.push(...SquirrelIntent.generate(robot, avoid, squirrelMap, pathMap, this.world));
         actions.push(ReturnIntent.generateBestReturn(robot, avoid, returnMap, pathMap));
     }
     

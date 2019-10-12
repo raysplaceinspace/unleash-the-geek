@@ -8,6 +8,17 @@ export abstract class Intent {
 
     abstract toAction(robot: w.Entity, explosionAvoider: ExplosionAvoider, pathMap: PathMap): w.Action;
 
+    public static maximumValue(a: Intent, b: Intent) {
+        if (a.value > b.value) {
+            return -1;
+        } else if (a.value < b.value) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+
     subsumes(other: Intent): boolean {
         if (this.duplicates(other)) {
             // Enforce an ordering so one action always wins

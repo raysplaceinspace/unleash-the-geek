@@ -38,8 +38,8 @@ export default class CellBelief {
         return prior;
     }
 
-    observedSelfDig(success: boolean, appearsTrapped: boolean) {
-        if (success) {
+    observedSelfDig(success: boolean, drop: boolean, appearsTrapped: boolean) {
+        if (success || drop) {
             this.oreBelief = 1;
             this.oreKnown = 1;
             this.hadOre = true;

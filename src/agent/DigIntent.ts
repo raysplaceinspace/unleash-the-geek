@@ -11,16 +11,6 @@ import PathMap from './PathMap';
 import RadarMap from './RadarMap';
 import Vec from '../util/vector';
 
-function maximumValue(a: DigIntent, b: DigIntent) {
-    if (a.value > b.value) {
-        return -1;
-    } else if (a.value < b.value) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
 export default class DigIntent extends Intent {
     type: "dig";
 
@@ -31,13 +21,19 @@ export default class DigIntent extends Intent {
     public static generateDigActions(robot: w.Entity, world: w.World, payoffMap: PayoffMap, pathMap: PathMap, radarMap: RadarMap, beliefs: Beliefs): DigIntent[] {
         const cellValues = [...collections.map(
             traverse.right(world, 1),
-            dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, pathMap, radarMap, beliefs))];
-        cellValues.sort(maximumValue);
+            dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, pathMap, radarMap, beliefs))]
+            .filter(x => !!x);
+        cellValues.sort(Intent.maximumValue);
 
         return cellValues;
     }
 
     private static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap, radarMap: RadarMap, beliefs: Beliefs): DigIntent {
+        if (beliefs.appearsTrapped(dig.x, dig.y) && world.tick < Params.MaxSquirrelTick) {
+            // Don't dig up squirrelled ore until later
+            return null;
+        }
+
         const placementCost = robot.carrying === w.ItemType.Trap ? DigIntent.placementCost(dig, world) : 0;
 
         const divisor = Params.TrapPlacementWeight + placementCost

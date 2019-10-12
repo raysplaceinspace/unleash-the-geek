@@ -30,4 +30,6 @@ export const EnemyOreNeighbourBelief = 1; // Increase belief by this much
 export const FutureOreWeight = 0.1;
 export const OrePayoffPower = 8; // Convert ore probability into a payoff using this power
 
+export const MaxSquirrelTick = 100;
+
 export const ReturnNextOreWeight = 1; // When returning, how much weight to put on the distance to the next dig after returning

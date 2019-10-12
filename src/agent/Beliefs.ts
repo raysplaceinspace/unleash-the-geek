@@ -98,11 +98,12 @@ export default class Beliefs {
         const robotBelief = this.getOrCreateRobotBelief(robot.id);
 
         // Update cells
+        const drop = previousRobot && previousRobot.carrying !== robot.carrying && previousRobot.carrying === w.ItemType.Ore;
         const success = previousRobot && previousRobot.carrying !== robot.carrying && robot.carrying === w.ItemType.Ore;
         const appearsTrapped = robotBelief.carryingProbability() > 0;
-        console.error(`Self dig ${robot.id}, success=${success}, appearsTrapped=${appearsTrapped}`);
+        console.error(`Self dig ${robot.id}, success=${success}, drop=${drop} appearsTrapped=${appearsTrapped}`);
 
-        cellBelief.observedSelfDig(success, appearsTrapped);
+        cellBelief.observedSelfDig(success, drop, appearsTrapped);
         for (const p of traverse.neighbours(target, world, Params.OreNeighbourRange)) {
             this.cellBeliefs[p.y][p.x].observedSelfDigNeighbour(success, cellBelief);
         }
