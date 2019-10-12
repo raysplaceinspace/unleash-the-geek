@@ -208,7 +208,7 @@ export default class Beliefs {
                     result.push(newCell.pos);
                 }
 
-                if (newCell.ore !== null && oldCell.ore !== null && newCell.ore < oldCell.ore) {
+                if (typeof newCell.ore === 'number' && typeof oldCell.ore === 'number' && newCell.ore < oldCell.ore) {
                     numDigs = Math.max(numDigs, oldCell.ore - newCell.ore);
                 }
 
