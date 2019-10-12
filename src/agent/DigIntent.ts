@@ -52,12 +52,11 @@ export default class DigIntent extends Intent {
 
         let value = initialValue;
         value += DigIntent.evaluateFutureDigs(robot, dig, world, beliefs, moveTicks);
+        value += DigIntent.evaluateRadar(robot, dig, world, pathMap, radarMap);
 
         if (beliefs.trapProbability(dig.x, dig.y) > 0) {
             value -= Params.ExplosionCost;
         }
-
-        value += DigIntent.evaluateRadar(robot, dig, world, pathMap, radarMap);
 
         return new DigIntent(robot.id, dig, destination, value);
     }
@@ -108,7 +107,7 @@ export default class DigIntent extends Intent {
             extraValue += discount(1, tick);
         }
 
-        return extraValue;
+        return Params.FutureOreWeight * extraValue;
     }
 
     private static calculateDigAndReturnTicks(dig: Vec) {
