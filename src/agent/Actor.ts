@@ -240,7 +240,8 @@ export default class Actor {
     private evaluateDig(robot: w.Entity, actions: Intent[]) {
         const pathMap = this.getOrCreatePathMap(robot.id);
         const payoffMap = this.getOrCreatePayoffMap();
-        actions.push(...DigIntent.generateDigActions(robot, this.world, payoffMap, pathMap, this.beliefs));
+        const radarMap = this.getOrCreateRadarMap();
+        actions.push(...DigIntent.generateDigActions(robot, this.world, payoffMap, pathMap, radarMap, this.beliefs));
 
     }
 

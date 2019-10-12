@@ -13,6 +13,14 @@ export function* all(dimensions: Dimensions): Iterable<Vec> {
     }
 }
 
+export function* right(dimensions: Dimensions, minX: number): Iterable<Vec> {
+    for (let y = 0; y < dimensions.height; ++y) {
+        for (let x = minX; x < dimensions.width; ++x) {
+            yield new Vec(x, y);
+        }
+    }
+}
+
 export function withinBounds(p: Vec, dimensions: Dimensions) {
     return distanceToEdge(p, dimensions) >= 0;
 }

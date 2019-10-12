@@ -20,7 +20,7 @@ export default class RadarMap {
         // Payoff equals number of potential ore uncovered	
         for (let y = 0; y < world.height; ++y) {	
             for (let x = 0; x < world.width; ++x) {	
-                payoffs[y][x] = beliefs.oreProbability(x, y);	
+                payoffs[y][x] = Math.pow(beliefs.oreProbability(x, y), Params.OrePayoffPower);
             }	
         }	
 

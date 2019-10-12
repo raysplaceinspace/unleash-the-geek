@@ -8,6 +8,7 @@ import Intent from './Intent';
 import * as Params from './Params';
 import PayoffMap from './PayoffMap';
 import PathMap from './PathMap';
+import RadarMap from './RadarMap';
 import Vec from '../util/vector';
 
 function maximumValue(a: DigIntent, b: DigIntent) {
@@ -27,22 +28,19 @@ export default class DigIntent extends Intent {
         super(robotId, value);
     }
 
-    public static generateDigActions(robot: w.Entity, world: w.World, payoffMap: PayoffMap, pathMap: PathMap, beliefs: Beliefs): DigIntent[] {
+    public static generateDigActions(robot: w.Entity, world: w.World, payoffMap: PayoffMap, pathMap: PathMap, radarMap: RadarMap, beliefs: Beliefs): DigIntent[] {
         const cellValues = [...collections.map(
-            traverse.all(world),
-            dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, pathMap, beliefs))];
+            traverse.right(world, 1),
+            dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, pathMap, radarMap, beliefs))];
         cellValues.sort(maximumValue);
 
         return cellValues;
     }
 
-    private static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap, beliefs: Beliefs): DigIntent {
-        const radarCost = robot.carrying === w.ItemType.Radar ? DigIntent.radarCost(dig, world) : 0;
+    private static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap, radarMap: RadarMap, beliefs: Beliefs): DigIntent {
         const placementCost = robot.carrying === w.ItemType.Trap ? DigIntent.placementCost(dig, world) : 0;
 
-        const divisor =
-            + Params.TrapPlacementWeight + placementCost
-            + Params.RadarPlacementWeight * radarCost
+        const divisor = Params.TrapPlacementWeight + placementCost
 
         const payoff = payoffs.payoff(dig.x, dig.y);
         const destination = collections.minBy(
@@ -59,8 +57,28 @@ export default class DigIntent extends Intent {
             value -= Params.ExplosionCost;
         }
 
+        value += DigIntent.evaluateRadar(robot, dig, world, radarMap);
 
         return new DigIntent(robot.id, dig, destination, value);
+    }
+
+    private static evaluateRadar(robot: w.Entity, dig: Vec, world: w.World, radarMap: RadarMap): number {
+        if (robot.carrying !== w.ItemType.Radar) {
+            return 0;
+        }
+
+        const digAndReturnTicks = this.calculateDigAndReturnTicks(dig);
+
+        let payoff = 0;
+        let numNeighbours = 0;
+        for (const n of traverse.neighbours(dig, world, w.RadarRange)) {
+            payoff += radarMap.payoff(n.x, n.y);
+            ++numNeighbours;
+        }
+        payoff /= Math.max(1, numNeighbours);
+
+        const value = discount(Params.RadarPlacementWeight * payoff, digAndReturnTicks);
+        return value;
     }
 
     private static evaluateFutureDigs(robot: w.Entity, dig: Vec, world: w.World, beliefs: Beliefs, initialTicks: number): number {
@@ -80,7 +98,7 @@ export default class DigIntent extends Intent {
             return 0;
         }
 
-        const digAndReturnTicks = 2 * Math.ceil(dig.x / w.MovementSpeed);
+        const digAndReturnTicks = this.calculateDigAndReturnTicks(dig);
 
         let extraValue = 0;
 
@@ -91,6 +109,11 @@ export default class DigIntent extends Intent {
         }
 
         return extraValue;
+    }
+
+    private static calculateDigAndReturnTicks(dig: Vec) {
+        const digAndReturnTicks = 2 * Math.ceil(dig.x / w.MovementSpeed);
+        return digAndReturnTicks;
     }
 
     private static calculateReturnTicks(n: Vec, pathMap: PathMap) {

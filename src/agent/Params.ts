@@ -15,7 +15,7 @@ export const BluffInterval = 1;
 export const AllowMultipleBluffsPerTick = true;
 
 export const MaximumRadarCoverage = 0.9;
-export const RadarPlacementWeight = 10;
+export const RadarPlacementWeight = 1;
 
 export const TrapPlacementWeight = 1;
 export const TrapPlacementRange = 5;
