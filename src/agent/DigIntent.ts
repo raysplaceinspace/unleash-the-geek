@@ -55,6 +55,11 @@ export default class DigIntent extends Intent {
         let value = initialValue;
         value += DigIntent.evaluateFutureDigs(robot, dig, world, beliefs, moveTicks);
 
+        if (beliefs.trapProbability(dig.x, dig.y) > 0) {
+            value -= Params.ExplosionCost;
+        }
+
+
         return new DigIntent(robot.id, dig, destination, value);
     }
 
