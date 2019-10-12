@@ -41,8 +41,7 @@ export default class ReturnIntent extends Intent {
         return {
             entityId: robot.id,
             type: "move",
-            // Always avoid when carrying because we'd lose an ore
-            target: explosionAvoider.avoidancePath(robot.id, pathMap, this.target),
+            target: explosionAvoider.claimPath(robot.id, pathMap, this.target),
         };
     }
 }
