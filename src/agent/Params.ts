@@ -15,7 +15,7 @@ export const BluffInterval = 5;
 export const AllowMultipleBluffsPerTick = false;
 
 export const MaximumRadarCoverage = 0.9;
-export const RadarPlacementWeight = 10;
+export const RadarPlacementWeight = 1;
 
 export const TrapPlacementWeight = 1;
 export const TrapPlacementRange = 5;
@@ -26,7 +26,7 @@ export const OreNeighbourBelief = 10; // Increase/decrease belief by this much
 export const EnemyOreNeighbourRange = 3; // When enemy digs a cell, increase belief in ore around them
 export const EnemyOreNeighbourBelief = 1; // Increase belief by this much
 
-export const FutureOreWeight = 0.1;
+export const FutureOreWeight = 1;
 export const OrePayoffPower = 8; // Convert ore probability into a payoff using this power
 
 export const ReturnNextOreWeight = 1; // When returning, how much weight to put on the distance to the next dig after returning
