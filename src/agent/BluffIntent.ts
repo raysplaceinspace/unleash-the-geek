@@ -52,7 +52,7 @@ export default class BluffIntent extends Intent {
 
     duplicates(other: Intent): boolean {
         if (other instanceof BluffIntent) {
-            return true;
+            return !Params.AllowMultipleBluffsPerTick;
         } else {
             return super.duplicates(other);
         }
