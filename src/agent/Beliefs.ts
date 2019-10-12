@@ -56,9 +56,13 @@ export default class Beliefs {
             }
         });
 
+        const diggingEnemies = this.findDiggingEnemies(previous, world);
+        const knownAssignments = this.assignDigsToEnemies(unexplainedDigs, diggingEnemies);
+
         world.entities.forEach(robot => {
             if (robot.type === w.ItemType.RobotTeam1 && !robot.dead) {
-                this.observeEnemyRobot(robot, previous, world, unexplainedDigs);
+                const knownDigs = knownAssignments.get(robot.id) || [];
+                this.observeEnemyRobot(robot, previous, world, knownDigs);
             }
         });
     }
@@ -117,33 +121,27 @@ export default class Beliefs {
         }
     }
 
-    private observeEnemyRobot(robot: w.Entity, previous: w.World, world: w.World, unexplainedDigs: Vec[]) {
+    private observeEnemyRobot(robot: w.Entity, previous: w.World, world: w.World, knownDigs: Vec[]) {
         const previousRobot = previous.entities.find(r => r.id === robot.id);
-        this.observeEnemyDig(robot, previousRobot, world, unexplainedDigs);
+
+        this.observeEnemyDig(robot, previousRobot, world, knownDigs);
         this.observeEnemyPickup(robot, previousRobot);
     }
 
-    private observeEnemyDig(robot: w.Entity, previousRobot: w.Entity, world: w.World, unexplainedDigs: Vec[]) {
+    private observeEnemyDig(robot: w.Entity, previousRobot: w.Entity, world: w.World, knownDigs: Vec[]) {
         if (!(previousRobot && previousRobot.pos.x === robot.pos.x && previousRobot.pos.y === robot.pos.y)) {
             return;
         }
 
         const robotBelief = this.getOrCreateRobotBelief(robot.id);
 
-        let knownDig = new Array<Vec>();
-        for (const dig of unexplainedDigs) {
-            if (Vec.l1(dig, previousRobot.pos) <= w.DigRange) {
-                knownDig.push(dig);
-            }
-        }
-
         const carryingProbability = robotBelief.carryingProbability();
-        if (knownDig.length > 0) {
-            console.error(`Enemy dig ${robot.id}: carrying=${carryingProbability.toFixed(2)} at ${knownDig.map(x => x.string()).join(' ')}`);
+        if (knownDigs.length > 0) {
+            console.error(`Enemy dig ${robot.id}: carrying=${carryingProbability.toFixed(2)} at ${knownDigs.map(x => x.string()).join(' ')}`);
 
             robotBelief.observedDig();
 
-            for (const dig of knownDig) {
+            for (const dig of knownDigs) {
                 this.cellBeliefs[dig.y][dig.x].observedEnemyDig(carryingProbability);
             }
 
@@ -232,6 +230,75 @@ export default class Beliefs {
                 }
             }
         }
+        return result;
+    }
+
+    private findDiggingEnemies(previous: w.World, world: w.World): w.Entity[] {
+        const result = new Array<w.Entity>();
+
+        for (const robot of world.entities) {
+            if (!(robot.type === w.ItemType.RobotTeam1 && !robot.dead)) {
+                continue;
+            }
+
+            const previousRobot = previous.entities.find(r => r.id === robot.id);
+            if (!previousRobot) {
+                continue;
+            }
+
+            if (!(previousRobot.pos.equals(robot.pos))) {
+                continue;
+            }
+
+            result.push(robot);
+        }
+
+        return result;
+    }
+
+    private assignDigsToEnemies(unexplainedDigs: Vec[], diggingEnemies: w.Entity[]): Map<number, Vec[]> {
+        const result = new Map<number, Vec[]>();
+
+        // Assign singles
+        while (unexplainedDigs.length > 0) {
+            let changed = false;
+            for (const dig of [...unexplainedDigs]) {
+                const potentialEnemies = diggingEnemies.filter(enemy => Vec.l1(enemy.pos, dig) <= w.DigRange);
+                if (potentialEnemies.length === 1) {
+                    changed = true;
+                    const enemy = potentialEnemies[0];
+
+                    // Explain the dig
+                    {
+                        const index = unexplainedDigs.findIndex(v => v === dig);
+                        if (index !== -1) {
+                            unexplainedDigs.splice(index, 1);
+                        }
+                    }
+
+                    // Explain the enemy
+                    {
+                        const index = diggingEnemies.findIndex(v => v === enemy);
+                        if (index !== -1) {
+                            diggingEnemies.splice(index, 1);
+                        }
+                    }
+
+                    // Assign
+                    let assigned = result.get(enemy.id);
+                    if (!assigned) {
+                        assigned = [];
+                        result.set(enemy.id, assigned);
+                    }
+                    assigned.push(dig);
+                }
+            }
+
+            if (!changed) {
+                break;
+            }
+        }
+
         return result;
     }
 }
