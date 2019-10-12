@@ -202,15 +202,18 @@ export default class Beliefs {
                 const oldCell = previous.map[y][x];
                 const newCell = world.map[y][x];
 
+                let numDigs = 0;
                 if (newCell.hole && !oldCell.hole) {
+                    numDigs = 1;
                     result.push(newCell.pos);
                 }
 
                 if (newCell.ore !== null && oldCell.ore !== null && newCell.ore < oldCell.ore) {
-                    let numDigs = oldCell.ore - newCell.ore;
-                    for (let i = 0; i < numDigs; ++i) {
-                        result.push(newCell.pos);
-                    }
+                    numDigs = Math.max(numDigs, oldCell.ore - newCell.ore);
+                }
+
+                for (let i = 0; i < numDigs; ++i) {
+                    result.push(newCell.pos);
                 }
             }
         }
