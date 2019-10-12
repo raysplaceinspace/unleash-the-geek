@@ -57,27 +57,27 @@ export default class DigIntent extends Intent {
             value -= Params.ExplosionCost;
         }
 
-        value += DigIntent.evaluateRadar(robot, dig, world, radarMap);
+        value += DigIntent.evaluateRadar(robot, dig, world, pathMap, radarMap);
 
         return new DigIntent(robot.id, dig, destination, value);
     }
 
-    private static evaluateRadar(robot: w.Entity, dig: Vec, world: w.World, radarMap: RadarMap): number {
+    private static evaluateRadar(robot: w.Entity, dig: Vec, world: w.World, pathMap: PathMap, radarMap: RadarMap): number {
         if (robot.carrying !== w.ItemType.Radar) {
             return 0;
         }
 
+        const travelTicks = pathMap.cost(dig);
         const digAndReturnTicks = this.calculateDigAndReturnTicks(dig);
 
         let payoff = 0;
-        let numNeighbours = 0;
         for (const n of traverse.neighbours(dig, world, w.RadarRange)) {
             payoff += radarMap.payoff(n.x, n.y);
-            ++numNeighbours;
         }
-        payoff /= Math.max(1, numNeighbours);
+        payoff /= w.RadarRange * w.RadarRange;
 
-        const value = discount(Params.RadarPlacementWeight * payoff, digAndReturnTicks);
+        const ticks = travelTicks + digAndReturnTicks;
+        const value = discount(Params.RadarPlacementWeight * payoff, ticks);
         return value;
     }
 

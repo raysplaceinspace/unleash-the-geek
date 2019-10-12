@@ -23,7 +23,7 @@ export class RequestIntent extends Intent {
     }
 
     private static evaluateAt(robot: w.Entity, y: number, item: number, radarMap: RadarMap, pathMap: PathMap, explosionMap: ExplosionMap): RequestIntent {
-        const payoff = radarMap.reqeustPayoff(y);
+        const payoff = 1 + radarMap.requestPayoff(y);
 
         const target = new Vec(0, y);
         let returnTicks = pathMap.cost(target);

@@ -10,7 +10,7 @@ export default class RadarMap {
     private constructor(private payoffMap: number[][], private requestMap: number[], public coverage: number) {	
     }
 
-    reqeustPayoff(y: number) {	
+    requestPayoff(y: number) {	
         return this.requestMap[y];
     }
 
@@ -34,7 +34,7 @@ export default class RadarMap {
         world.entities.forEach(radar => {	
             if (radar.type === w.ItemType.Radar) {
                 for (const n of traverse.neighbours(radar.pos, world, w.RadarRange)) {	
-                    payoffs[n.y][n.x] = 0;	
+                    payoffs[n.y][n.x] = 0;
 
                     if (!covered[n.y][n.x]) {	
                         covered[n.y][n.x] = true;	
