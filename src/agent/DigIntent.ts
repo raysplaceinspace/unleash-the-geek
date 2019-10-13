@@ -118,14 +118,6 @@ export default class DigIntent extends Intent {
         return pathMap.cost(n) + returnTicks;
     }
 
-    duplicates(other: Intent): boolean {
-        if (other instanceof DigIntent) {
-            return this.target.equals(other.target);
-        } else {
-            return super.duplicates(other);
-        }
-    }
-
     toAction(robot: w.Entity, explosionAvoider: ExplosionAvoider, pathMap: PathMap): w.Action {
         if (robot.pos.equals(this.destination)) {
             return {

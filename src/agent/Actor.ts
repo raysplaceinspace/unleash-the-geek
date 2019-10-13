@@ -104,6 +104,8 @@ export default class Actor {
 
         const potentialActions = this.evaluateChoices(robots);
 
+        this.coordinateDigs(potentialActions);
+
         for (let attempt = 0; attempt < this.world.numRobots; ++attempt) {
             const changed = this.subsumeActions(robots, potentialActions);
             if (!changed) {
@@ -169,6 +171,93 @@ export default class Actor {
         }
         return result;
 
+    }
+
+    private coordinateDigs(potentialActions: Map<number, Intent[]>) {
+        let numCoordinations = 0;
+        while (true) {
+            const actions = collections.map(potentialActions.values(), x => x ? x[0] : undefined);
+            const digActions = collections.filter(actions, x => x && x instanceof DigIntent) as DigIntent[];
+
+            const duplicateDigs = this.findDuplicateDigs(digActions);
+            if (duplicateDigs.length > 0) {
+                numCoordinations += duplicateDigs.length;
+                this.removeFromPotentialActions(potentialActions, duplicateDigs);
+                continue;
+            }
+            
+            const duplicateDestinations = this.findDuplicateDestinations(digActions);
+            if (duplicateDestinations.length > 0) {
+                numCoordinations += duplicateDestinations.length;
+                this.removeFromPotentialActions(potentialActions, duplicateDestinations);
+                continue;
+            }
+
+            break;
+        }
+
+        console.error(`Coordinated ${numCoordinations} digs`);
+    }
+
+    private findDuplicateDigs(digActions: DigIntent[]) {
+        const explosionMap = this.getOrCreateExplosionMap();
+
+        const toRemove = new Array<Intent>();
+
+        const digsPerTarget = collections.groupBy(digActions, x => x.target.hash());
+        for (const digs of digsPerTarget.values()) {
+            if (digs.length > 1) {
+                const target = digs[0].target;
+                const cell = this.world.map[target.y][target.x];
+
+                let limit = typeof cell.ore === 'number' ? cell.ore : 1;
+                if (explosionMap.explodeProbability(target.x, target.y) > 0) {
+                    limit = 1;
+                }
+
+                if (digs.some(d => this.beliefs.carryingProbability(d.robotId) > 0)) {
+                    // If someone is going to seal the cell, just let one robot do it
+                    limit = 1;
+                }
+
+                if (digs.length > limit) {
+                    digs.sort(Intent.maximumValue);
+                    toRemove.push(...digs.slice(limit));
+                }
+            }
+        }
+
+        return toRemove;
+    }
+
+    private findDuplicateDestinations(digActions: DigIntent[]) {
+        const explosionMap = this.getOrCreateExplosionMap();
+
+        const toRemove = new Array<Intent>();
+
+        const digsPerDestination = collections.groupBy(digActions, x => x.destination.hash());
+        for (const digs of digsPerDestination.values()) {
+            const destination = digs[0].destination;
+            if (digs.length > 1 && explosionMap.explodeProbability(destination.x, destination.y) > 0) {
+                const limit = 1;
+                if (digs.length > limit) {
+                    digs.sort(Intent.maximumValue);
+                    toRemove.push(...digs.slice(limit));
+                }
+            }
+        }
+
+        return toRemove;
+    }
+
+    private removeFromPotentialActions(potentialActions: Map<number, Intent[]>, toSubsume: Intent[]) {
+        for (const action of toSubsume) {
+            const robotActions = potentialActions.get(action.robotId);
+            const index = robotActions.findIndex(x => x === action);
+            if (index !== -1) {
+                robotActions.splice(index, 1);
+            }
+        }
     }
 
     private subsumeActions(robots: w.Entity[], potentialActions: Map<number, Intent[]>): boolean {

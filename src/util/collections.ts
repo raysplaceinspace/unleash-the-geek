@@ -76,6 +76,28 @@ export function* filter<T>(items: Iterable<T>, selector: (item: T) => boolean): 
     }
 }
 
+export function groupBy<T, K>(items: Iterable<T>, selector: (item: T) => K): Map<K, T[]> {
+    const groups = new Map<K, T[]>();
+    for (const item of items) {
+        const key = selector(item);
+        let group = groups.get(key);
+        if (!group) {
+            group = [];
+            groups.set(key, group);
+        }
+        group.push(item);
+    }
+    return groups;
+}
+
+export function lookup<T, K>(items: Iterable<T>, selector: (item: T) => K): Map<K, T> {
+    const lookup = new Map<K, T>();
+    for (const item of items) {
+        lookup.set(selector(item), item);
+    }
+    return lookup;
+}
+
 export function toArray<T>(items: Iterable<T>): T[] {
     const result = new Array<T>();
     for (const item of items) {
