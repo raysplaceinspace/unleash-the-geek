@@ -36,8 +36,9 @@ export default class DigIntent extends Intent {
         }
 
         const placementCost = robot.carrying === w.ItemType.Trap ? DigIntent.placementCost(dig, world) : 0;
+        const radarCost = robot.carrying === w.ItemType.Radar ? DigIntent.radarCost(dig, world) : 0;
 
-        const divisor = Params.TrapPlacementWeight + placementCost
+        const divisor = placementCost + radarCost;
 
         const payoff = payoffs.payoff(dig.x, dig.y);
         const destination = collections.minBy(
@@ -73,7 +74,7 @@ export default class DigIntent extends Intent {
         payoff /= w.RadarRange * w.RadarRange;
 
         const ticks = travelTicks + digAndReturnTicks;
-        const value = discount(Params.RadarPlacementWeight * payoff, ticks);
+        const value = discount(Params.RadarPayoffWeight * payoff, ticks);
         return value;
     }
 
@@ -155,7 +156,7 @@ export default class DigIntent extends Intent {
             }
         });
 
-        return 1 - (outside - closest) / outside;
+        return Params.TrapPlacementWeight * (1 - (outside - closest) / outside);
     }
 
     private static radarCost(target: Vec, world: w.World): number {
@@ -170,6 +171,6 @@ export default class DigIntent extends Intent {
             }
         });
 
-        return (outside - closest) / outside;
+        return Params.RadarPlacementWeight * ((outside - closest) / outside);
     }
 }
