@@ -354,6 +354,12 @@ export default class Actor {
         const visibleOre = this.getOrCreateTotalVisibleOre();
         const numRobots = this.world.entities.filter(r => r.type === w.ItemType.RobotTeam0).length;
 
+        const squirrelling = this.world.tick < squirrelMap.unsquirrelTick;
+        if (!squirrelling) {
+            // When unsquirrelling, need to retrieve ore as quickly as possible
+            return;
+        }
+
         if (this.world.teams[0].radarCooldown === 0
             && (robot.pos.x === 0 || visibleOre < Params.MinimumVisibleOrePerRobot * numRobots)
             && visibleOre < Params.MaximumVisibleOre
@@ -364,7 +370,7 @@ export default class Actor {
         if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.activeTrapCount() < Params.MaximumTraps) {
             actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, radarMap, pathMap, explosionMap));
         }
-        if (robot.pos.x === 0 && this.beliefs.carryingProbability(robot.id) <= 0 && this.bluffScheduler.bluffReady(this.world.tick) && this.world.tick < squirrelMap.unsquirrelTick) {
+        if (robot.pos.x === 0 && this.beliefs.carryingProbability(robot.id) <= 0 && this.bluffScheduler.bluffReady(this.world.tick)) {
             actions.push(...BluffIntent.generate(robot, pathMap, explosionMap, squirrelMap));
         }
     }
