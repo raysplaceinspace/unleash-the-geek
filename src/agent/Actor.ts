@@ -86,7 +86,8 @@ export default class Actor {
 
     private getOrCreateReturnMap(): ReturnMap {
         if (!this.returnMap) {
-            this.returnMap = ReturnMap.generate(this.world, this.beliefs);
+            const squirrelMap = this.getOrCreateSquirrelMap();
+            this.returnMap = ReturnMap.generate(this.world, this.beliefs, squirrelMap);
         }
         return this.returnMap;
     }
