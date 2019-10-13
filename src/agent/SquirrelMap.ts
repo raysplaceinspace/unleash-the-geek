@@ -15,7 +15,9 @@ export default class SquirrelMap {
 
         for (let y = 0; y < world.height; ++y) {
             for (let x = 0; x < world.width; ++x) {	
-                if (beliefs.appearsTrapped(x, y) && beliefs.oreProbability(x, y) <= 0) {
+                const cell = world.map[y][x];
+                const visible = typeof cell.ore === 'number';
+                if (beliefs.appearsTrapped(x, y) && visible && cell.ore <= Params.MaxSquirrelOre) {
                     locations.push(new Vec(x, y));
                 }
             }	
