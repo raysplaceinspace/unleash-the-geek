@@ -1,7 +1,7 @@
 export const DiscountRate = 0.9;
 
 export const ExplosionCost = 100;
-export const AlwaysAvoidOnReturn = false;
+export const AllowAvoidOnReturn = true;
 
 export const OreStartX = 4;
 export const OreBeforeStartXPriorBelief = 0;
