@@ -23,6 +23,8 @@ export const RadarPlacementWeight = 0;
 export const TrapPlacementWeight = 1;
 export const TrapPlacementRange = 5;
 
+export const ProspectRange = 2; // Don't prospect closer than this
+
 export const OreNeighbourRange = 2; // When successfully dug ore at a cell, increase probability of ore in neighbouring cells within this range
 export const OreNeighbourBelief = 10; // Increase/decrease belief by this much
 

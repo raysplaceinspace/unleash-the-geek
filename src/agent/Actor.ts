@@ -177,7 +177,14 @@ export default class Actor {
         let numCoordinations = 0;
         while (true) {
             const actions = collections.map(potentialActions.values(), x => x ? x[0] : undefined);
-            const digActions = collections.filter(actions, x => x && x instanceof DigIntent) as DigIntent[];
+            const digActions = collections.toArray(collections.filter(actions, x => x && x instanceof DigIntent)) as DigIntent[];
+
+            const duplicateProspects = this.findDuplicateProspects(digActions);
+            if (duplicateProspects.length > 0) {
+                numCoordinations += duplicateProspects.length;
+                this.removeFromPotentialActions(potentialActions, duplicateProspects);
+                continue;
+            }
 
             const duplicateDigs = this.findDuplicateDigs(digActions);
             if (duplicateDigs.length > 0) {
@@ -197,6 +204,29 @@ export default class Actor {
         }
 
         console.error(`Coordinated ${numCoordinations} digs`);
+    }
+
+    private findDuplicateProspects(digActions: DigIntent[]) {
+        const prospects = digActions.filter(dig => {
+            const cell = this.world.map[dig.target.y][dig.target.x];
+            return typeof cell.ore !== 'number';
+        });
+
+        const toRemove = new Array<DigIntent>();
+        const digsPerProspect = collections.groupBy(prospects, x => this.prospectHash(x.target));
+        for (const digs of digsPerProspect.values()) {
+            const limit = 1;
+            if (digs.length > limit) {
+                digs.sort(Intent.maximumValue);
+                toRemove.push(...digs.slice(limit));
+            }
+        }
+        return toRemove;
+    }
+
+    private prospectHash(target: Vec): number {
+        return Math.floor(target.x / Params.ProspectRange)
+            | (Math.floor(target.y / Params.ProspectRange) << 16);
     }
 
     private findDuplicateDigs(digActions: DigIntent[]) {
