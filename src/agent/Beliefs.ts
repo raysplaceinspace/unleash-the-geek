@@ -71,11 +71,11 @@ export default class Beliefs {
         const previousRobot = previous.entities.find(r => r.id === robot.id);
         const previousAction = previous.actions.find(a => a.entityId === robot.id);
 
-        this.observeSelfDig(robot, previousAction, previousRobot, world, unexplainedDigs);
+        this.observeSelfDig(robot, previousAction, previousRobot, previous, world, unexplainedDigs);
         this.observeSelfPickup(robot, previousRobot);
     }
 
-    private observeSelfDig(robot: w.Entity, dig: w.Action, previousRobot: w.Entity, world: w.World, unexplainedDigs: Vec[]) {
+    private observeSelfDig(robot: w.Entity, dig: w.Action, previousRobot: w.Entity, previous: w.World, world: w.World, unexplainedDigs: Vec[]) {
         if (!(dig
             && dig.type === "dig"
             && previousRobot.pos.equals(robot.pos) // Stand still to dig
@@ -97,10 +97,12 @@ export default class Beliefs {
         const cellBelief = this.cellBeliefs[target.y][target.x];
         const robotBelief = this.getOrCreateRobotBelief(robot.id);
 
+        const previousCell = previous && previous.map[target.y][target.x];
+
         // Update cells
         const drop = previousRobot && previousRobot.carrying !== robot.carrying && previousRobot.carrying === w.ItemType.Ore;
         const success = previousRobot && previousRobot.carrying !== robot.carrying && robot.carrying === w.ItemType.Ore;
-        const appearsTrapped = robotBelief.carryingProbability() > 0;
+        const appearsTrapped = previousCell && !previousCell.hole && robotBelief.carryingProbability() > 0;
         console.error(`Self dig ${robot.id}, success=${success}, drop=${drop} appearsTrapped=${appearsTrapped}`);
 
         cellBelief.observedSelfDig(success, drop, appearsTrapped);
