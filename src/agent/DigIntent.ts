@@ -30,7 +30,7 @@ export default class DigIntent extends Intent {
     }
 
     private static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap, radarMap: RadarMap, squirrelMap: SquirrelMap, beliefs: Beliefs): DigIntent {
-        if (beliefs.appearsTrapped(dig.x, dig.y) && world.tick < squirrelMap.unsquirrelTick) {
+        if (squirrelMap.isSquirrel(dig) && world.tick < squirrelMap.unsquirrelTick) {
             // Don't dig up squirrelled ore until later
             return null;
         }

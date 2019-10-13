@@ -17,7 +17,7 @@ export default class SquirrelIntent extends Intent {
     }
 
     public static generate(robot: w.Entity, avoid: boolean, squirrelMap: SquirrelMap, pathMap: PathMap, world: w.World): SquirrelIntent[] {
-        if (world.tick >= Params.MaxHideSquirrelTick) {
+        if (world.tick >= squirrelMap.unsquirrelTick) {
             return [];
         }
 
@@ -27,6 +27,10 @@ export default class SquirrelIntent extends Intent {
     }
 
     private static evaluate(robot: w.Entity, target: Vec, avoid: boolean, pathMap: PathMap): SquirrelIntent {
+        if (target.x < Params.MinSquirrelX) {
+            return null;
+        }
+
         if (target.x > robot.pos.x) {
             return null;
         }
