@@ -38,10 +38,9 @@ export default class PayoffMap {
             return -1;
         }
 
-        const returnTicks = cell.pos.x / w.MovementSpeed;
         const orePayoff = Math.pow(beliefs.oreProbability(cell.pos.x, cell.pos.y), Params.OrePayoffPower);
 
-        const payoff = discount(orePayoff, returnTicks);
+        const payoff = orePayoff;
         return payoff;
     }
 }
