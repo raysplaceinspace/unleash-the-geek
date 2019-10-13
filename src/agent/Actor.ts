@@ -231,6 +231,7 @@ export default class Actor {
 
         const pathMap = this.getOrCreatePathMap(robot.id);
         const radarMap = this.getOrCreateRadarMap();
+        const squirrelMap = this.getOrCreateSquirrelMap();
 
         const explosionMap = this.getOrCreateExplosionMap();
 
@@ -248,7 +249,7 @@ export default class Actor {
             actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, radarMap, pathMap, explosionMap));
         }
         if (robot.pos.x === 0 && this.beliefs.carryingProbability(robot.id) <= 0 && this.bluffScheduler.bluffReady(this.world.tick)) {
-            actions.push(BluffIntent.evaluate(robot, pathMap, explosionMap));
+            actions.push(...BluffIntent.generate(robot, pathMap, explosionMap, squirrelMap));
         }
     }
 

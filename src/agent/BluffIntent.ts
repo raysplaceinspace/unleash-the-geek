@@ -7,18 +7,23 @@ import * as Params from './Params';
 import PathMap from './PathMap';
 import Vec from '../util/vector';
 import ExplosionMap from './ExplosionMap';
+import SquirrelMap from './SquirrelMap';
 
 export default class BluffIntent extends Intent {
     private constructor(robotId: number, public target: Vec, value: number) {
         super(robotId, value);
     }
 
-    public static evaluate(robot: w.Entity, pathMap: PathMap, explosionMap: ExplosionMap) {
+    public static generate(robot: w.Entity, pathMap: PathMap, explosionMap: ExplosionMap, squirrelMap: SquirrelMap): BluffIntent[] {
+        if (squirrelMap.numSquirrelableLocations <= 0) {
+            return [];
+        }
+
         const intents = collections.map(
             collections.range(pathMap.bounds.height),
             y => BluffIntent.evaluateAt(robot, y, pathMap, explosionMap));
         const best = collections.maxBy(intents, x => x.value);
-        return best;
+        return [best];
     }
 
     private static evaluateAt(robot: w.Entity, y: number, pathMap: PathMap, explosionMap: ExplosionMap): BluffIntent {
