@@ -12,8 +12,8 @@ export const MinimumVisibleOrePerRobot = 1;
 export const MaximumVisibleOre = 100;
 export const MaximumTraps = 0;
 
-export const BluffInterval = 1;
-export const AllowMultipleBluffsPerTick = true;
+export const BluffInterval = 3;
+export const AllowMultipleBluffsPerTick = false;
 export const MaxBluffTick = 200;
 
 export const MaximumRadarCoverage = 0.9;
