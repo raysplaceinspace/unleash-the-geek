@@ -339,7 +339,7 @@ export default class Actor {
         if (this.world.teams[0].trapCooldown === 0 && robot.pos.x === 0 && this.activeTrapCount() < Params.MaximumTraps) {
             actions.push(RequestIntent.evaluate(robot, w.ItemType.Trap, radarMap, pathMap, explosionMap));
         }
-        if (robot.pos.x === 0 && this.beliefs.carryingProbability(robot.id) <= 0 && this.bluffScheduler.bluffReady(this.world.tick)) {
+        if (robot.pos.x === 0 && this.beliefs.carryingProbability(robot.id) <= 0 && this.bluffScheduler.bluffReady(this.world.tick) && this.world.tick < squirrelMap.unsquirrelTick) {
             actions.push(...BluffIntent.generate(robot, pathMap, explosionMap, squirrelMap));
         }
     }

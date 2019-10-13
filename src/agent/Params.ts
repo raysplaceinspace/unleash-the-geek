@@ -6,7 +6,7 @@ export const AlwaysAvoidOnReturn = false;
 export const OreStartX = 4;
 export const OreBeforeStartXPriorBelief = 0;
 export const OreMargin = 5;
-export const OreMarginPriorBelief = -1;
+export const OreMarginPriorBelief = -0.25;
 
 export const MinimumVisibleOrePerRobot = 1;
 export const MaximumVisibleOre = 100;
