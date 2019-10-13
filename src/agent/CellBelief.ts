@@ -48,7 +48,7 @@ export default class CellBelief {
             this.oreKnown = -1;
         }
 
-        this.appearsTrapped = this.appearsTrapped || appearsTrapped;
+        this.appearsTrapped = appearsTrapped;
     }
 
     observedSelfDigNeighbour(success: boolean, neighbour: CellBelief) {
