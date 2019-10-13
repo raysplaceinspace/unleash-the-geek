@@ -241,7 +241,7 @@ export default class Actor {
                 const cell = this.world.map[target.y][target.x];
 
                 let limit = typeof cell.ore === 'number' ? cell.ore : 1;
-                if (squirrelling && digs.some(d => this.beliefs.carryingProbability(d.robotId) > 0)) {
+                if (squirrelling && this.beliefs.carryingProbability(digs[0].robotId) > 0) {
                     // If someone is going to seal the cell, just let one robot do it
                     limit = 1;
                 }
