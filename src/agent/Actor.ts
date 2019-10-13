@@ -201,6 +201,7 @@ export default class Actor {
 
     private findDuplicateDigs(digActions: DigIntent[]) {
         const explosionMap = this.getOrCreateExplosionMap();
+        const squirrelling = this.world.tick < this.getOrCreateSquirrelMap().unsquirrelTick;
 
         const toRemove = new Array<Intent>();
 
@@ -215,7 +216,7 @@ export default class Actor {
                     limit = 1;
                 }
 
-                if (digs.some(d => this.beliefs.carryingProbability(d.robotId) > 0)) {
+                if (squirrelling && digs.some(d => this.beliefs.carryingProbability(d.robotId) > 0)) {
                     // If someone is going to seal the cell, just let one robot do it
                     limit = 1;
                 }
