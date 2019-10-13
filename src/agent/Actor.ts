@@ -256,7 +256,8 @@ export default class Actor {
         const pathMap = this.getOrCreatePathMap(robot.id);
         const payoffMap = this.getOrCreatePayoffMap();
         const radarMap = this.getOrCreateRadarMap();
-        actions.push(...DigIntent.generateDigActions(robot, this.world, payoffMap, pathMap, radarMap, this.beliefs));
+        const squirrelMap = this.getOrCreateSquirrelMap();
+        actions.push(...DigIntent.generateDigActions(robot, this.world, payoffMap, pathMap, radarMap, squirrelMap, this.beliefs));
 
     }
 

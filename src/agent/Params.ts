@@ -33,6 +33,6 @@ export const OrePayoffPower = 8; // Convert ore probability into a payoff using 
 
 export const MaxSquirrelOre = 1;
 export const MaxHideSquirrelTick = 0;
-export const MinDigSquirrelTick = 150;
+export const UnsquirrelTicksMultiplier = 2;
 
 export const ReturnNextOreWeight = 1; // When returning, how much weight to put on the distance to the next dig after returning

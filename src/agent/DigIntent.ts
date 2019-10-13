@@ -9,6 +9,7 @@ import * as Params from './Params';
 import PayoffMap from './PayoffMap';
 import PathMap from './PathMap';
 import RadarMap from './RadarMap';
+import SquirrelMap from './SquirrelMap';
 import Vec from '../util/vector';
 
 export default class DigIntent extends Intent {
@@ -18,18 +19,18 @@ export default class DigIntent extends Intent {
         super(robotId, value);
     }
 
-    public static generateDigActions(robot: w.Entity, world: w.World, payoffMap: PayoffMap, pathMap: PathMap, radarMap: RadarMap, beliefs: Beliefs): DigIntent[] {
+    public static generateDigActions(robot: w.Entity, world: w.World, payoffMap: PayoffMap, pathMap: PathMap, radarMap: RadarMap, squirrelMap: SquirrelMap, beliefs: Beliefs): DigIntent[] {
         const cellValues = [...collections.map(
             traverse.right(world, 1),
-            dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, pathMap, radarMap, beliefs))]
+            dig => DigIntent.evaluatePos(robot, dig, world, payoffMap, pathMap, radarMap, squirrelMap, beliefs))]
             .filter(x => !!x);
         cellValues.sort(Intent.maximumValue);
 
         return cellValues;
     }
 
-    private static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap, radarMap: RadarMap, beliefs: Beliefs): DigIntent {
-        if (beliefs.appearsTrapped(dig.x, dig.y) && world.tick < Params.MinDigSquirrelTick) {
+    private static evaluatePos(robot: w.Entity, dig: Vec, world: w.World, payoffs: PayoffMap, pathMap: PathMap, radarMap: RadarMap, squirrelMap: SquirrelMap, beliefs: Beliefs): DigIntent {
+        if (beliefs.appearsTrapped(dig.x, dig.y) && world.tick < squirrelMap.unsquirrelTick) {
             // Don't dig up squirrelled ore until later
             return null;
         }
