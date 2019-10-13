@@ -43,7 +43,7 @@ export default class SquirrelMap {
         }
 
         const numRobots = world.entities.filter(r => r.type === w.ItemType.RobotTeam0 && !r.dead).length;
-        const unsquirrelTick = w.MaxTicks - Math.ceil(Params.UnsquirrelTicksMultiplier * ticksToUnsquirrel / Math.max(1, numRobots));
+        const unsquirrelTick = Math.min(Params.MaxUnsquirrelTick, w.MaxTicks - Math.ceil(Params.UnsquirrelTicksMultiplier * ticksToUnsquirrel / Math.max(1, numRobots)));
         console.error(`Squirrel: until ${unsquirrelTick}, ore ${squirrelledOre}`);
         return new SquirrelMap(locations, unsquirrelTick, numSquirrelableLocations);	
     }
