@@ -10,7 +10,7 @@ export const OreMarginPriorBelief = -0.25;
 
 export const MinimumVisibleOrePerRobot = 1;
 export const MaximumVisibleOre = 100;
-export const MaximumTraps = 0;
+export const MaximumTraps = 3;
 
 export const BluffInterval = 1;
 export const AllowMultipleBluffsPerTick = true;

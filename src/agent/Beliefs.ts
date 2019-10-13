@@ -156,7 +156,7 @@ export default class Beliefs {
             }
 
             if (potentialDig) {
-                console.error(`Enemy still ${robot.id}: carrying=${carryingProbability.toFixed(2)}`);
+                console.error(`Enemy still ${robot.id} (${robot.pos.string()}): carrying=${carryingProbability.toFixed(2)}`);
                 robotBelief.observedPotentialDig();
             }
         }

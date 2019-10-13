@@ -76,7 +76,7 @@ export default class CellBelief {
             this.trapBelief += 1;
         } else {
             // Can't be a trap here because the enemy just dug here
-            this.trapBelief = -1;
+            this.trapBelief = -0.01;
         }
     }
 
