@@ -29,7 +29,7 @@ export const EnemyOreNeighbourRange = 3; // When enemy digs a cell, increase bel
 export const EnemyOreNeighbourBelief = 1; // Increase belief by this much
 
 export const FutureOreWeight = 1;
-export const OrePayoffPower = 8; // Convert ore probability into a payoff using this power
+export const OrePayoffPower = 4; // Convert ore probability into a payoff using this power
 
 export const MinSquirrelX = 31;
 export const UnsquirrelTicksMultiplier = 1.5;
