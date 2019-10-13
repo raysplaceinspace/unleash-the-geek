@@ -17,7 +17,7 @@ export default class SquirrelIntent extends Intent {
     }
 
     public static generate(robot: w.Entity, avoid: boolean, squirrelMap: SquirrelMap, pathMap: PathMap, world: w.World): SquirrelIntent[] {
-        if (world.tick >= Params.MaxSquirrelTick) {
+        if (world.tick >= Params.MaxHideSquirrelTick) {
             return [];
         }
 

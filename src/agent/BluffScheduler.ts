@@ -8,6 +8,6 @@ export default class BluffScheduler {
     }
 
     bluffReady(tick: number) {
-        return tick >= this.nextBluff;
+        return tick < Params.MaxBluffTick && tick >= this.nextBluff;
     }
 }
